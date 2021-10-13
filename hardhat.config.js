@@ -1,6 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
-require("@nomiclabs/hardhat-etherscan");
 const config = require("./config.json");
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -21,29 +20,23 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  */
 module.exports = {
   solidity: "0.8.5",
-  defaultNetwork: "hardhat",
+  defaultNetwork: "ropsten",
   networks: {
     hardhat: {},
 		ropsten: {
 			url: `https://ropsten.infura.io/v3/${config.infura}`,
-			accounts: {
-				mnemonic: config.privateKey,
-				count: 1,
-			},
+			accounts: [config.privateKey],
 		},
 		mainnet: {
 			url: `https://mainnet.infura.io/v3/${config.infura}`,
-			accounts: {
-				mnemonic: config.privateKey,
-				count: 1,
-			},
+			accounts: [config.privateKey],
 			gas: 3200000,
 			gasPrice: 150000000000,
 		},
   },
   gasReporter: {
     currency: 'USD',
-    gasPrice: 5,
+    gasPrice: 100,
     excludeContracts: ['contracts/test']
   },
   etherscan: {

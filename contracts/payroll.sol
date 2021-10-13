@@ -3,9 +3,9 @@ pragma solidity 0.8.5;
 // SPDX-License-Identifier: LGPLv3
 
 
-import './oz/IERC20.sol';
-import './oz/ERC20.sol';
-import './oz/ReentrancyGuard.sol';
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title OpolisPay
 /// @notice Minimalist Contract for Crypto Payroll Payments
@@ -170,7 +170,7 @@ contract OpolisPay {
             require(payrolls[i].withdrawn == false, "already withdraw");
             require(tokenBalances[token] >= amount, "!enough$$");
 
-            _withdraw(token, balance); 
+            _withdraw(token, amount); 
             payrolls[i].withdrawn = true;
             
             emit OpsWithdraw(token, payrolls[i].payrollId, amount, true);
@@ -275,8 +275,8 @@ contract OpolisPay {
     }
 
     function _withdraw(address token, uint256 amount) internal {
-        IERC20(token).transfer(destination, balance);
-        tokenBalances[token] -= balance; 
+        IERC20(token).transfer(destination, amount);
+        tokenBalances[token] -= amount; 
     }
     
 }
