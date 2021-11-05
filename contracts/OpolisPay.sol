@@ -14,7 +14,7 @@ contract OpolisPay {
     address[] public supportedTokens; //Tokens that can be sent. 
     address public opolisAdmin; //Should be Opolis multi-sig for security
     address payable public destination; // Where funds are liquidated 
-    address private opolisHelper; //Can be bot wallet for convenience 
+    address public opolisHelper; //Can be bot wallet for convenience 
     
     uint256[] public payrollIds; //List of payrollIds associated with payments
     
