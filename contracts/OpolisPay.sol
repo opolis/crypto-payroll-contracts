@@ -52,6 +52,8 @@ error DirectTransfer();
 contract OpolisPay is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+
     address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
     address payable private destination; // Where funds are liquidated 
@@ -101,7 +103,7 @@ contract OpolisPay is ReentrancyGuard {
         opolisHelper = _opolisHelper;
         
         for (uint256 i = 0; i < _tokenList.length; i++) {
-            _addTokens(_tokenList[i]);
+            _addToken(_tokenList[i]);
         }
         
         emit SetupComplete(destination, opolisAdmin, opolisHelper, _tokenList);
@@ -320,7 +322,7 @@ contract OpolisPay is ReentrancyGuard {
         if (newTokens.length == 0) revert ZeroTokens();
         
         for (uint256 i = 0; i < newTokens.length; i ++){
-            _addTokens(newTokens[i]);
+            _addToken(newTokens[i]);
         }
         
          emit NewToken(newTokens);  
