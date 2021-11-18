@@ -59,15 +59,15 @@ contract OpolisPay is ReentrancyGuard {
     address payable private destination; // Where funds are liquidated 
     address private opolisHelper; //Can be bot wallet for convenience 
     
-    event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
-    event Staked(address staker, address token, uint256 amount, uint256 memberId);
-    event Paid(address payor, address token, uint256 payrollId, uint256 amount); 
-    event OpsPayrollWithdraw(address token, uint256 payrollId, uint256 amount);
-    event OpsStakeWithdraw(address token, uint256 stakeId, uint256 amount);
-    event Sweep(address token, uint256 amount);
-    event NewDestination(address oldDestination, address destination);
-    event NewAdmin(address oldAdmin, address opolisAdmin);
-    event NewHelper(address oldHelper, address newHelper);
+    event SetupComplete(address indexed destination, address indexed admin, address indexed helper, address[] tokens);
+    event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId);
+    event Paid(address indexed payor, address indexed token, uint256 indexed payrollId, uint256 amount); 
+    event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
+    event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 amount);
+    event Sweep(address indexed token, uint256 amount);
+    event NewDestination(address indexed oldDestination, address indexed destination);
+    event NewAdmin(address indexed oldAdmin, address indexed opolisAdmin);
+    event NewHelper(address indexed oldHelper, address indexed newHelper);
     event NewToken(address[] newTokens);
     
     mapping (uint256 => bool) private stakes; //Tracks used stake ids
