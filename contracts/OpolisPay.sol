@@ -7,6 +7,45 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+/// @notice custom errors for revert statements
+
+/// @dev requires privileged access
+error NotPermitted();
+
+/// @dev not a whitelisted token
+error NotWhitelisted();
+
+/// @dev payroll id equals zero
+error InvalidPayroll();
+
+/// @dev amount equals zero
+error InvalidAmount();
+
+/// @dev payroll has already been paid
+error AlreadyPaid();
+
+/// @dev sender is not a member
+error NotMember();
+
+/// @dev stake must be a non zero amount of whitelisted token
+/// or non zero amount of eth
+error InvalidStake();
+
+/// @dev sender has already staked
+error AlreadyStaked();
+
+/// @dev setting one of the role to zero address
+error ZeroAddress();
+
+/// @dev whitelisting and empty list of tokens
+error ZeroTokens();
+
+/// @dev token has already been whitelisted
+error AlreadyWhitelisted();
+
+/// @dev sending eth directly to contract address
+error DirectTransfer();
+
 /// @title OpolisPay
 /// @notice Minimalist Contract for Crypto Payroll Payments
 contract OpolisPay {
@@ -33,12 +72,12 @@ contract OpolisPay {
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
     
     modifier onlyAdmin {
-        require(msg.sender == opolisAdmin, "!permitted");
+        if(msg.sender != opolisAdmin) revert NotPermitted();
         _;
     }
     
     modifier onlyOpolis {
-        require(msg.sender == opolisAdmin || msg.sender == opolisHelper, "!permitted");
+        if (!(msg.sender == opolisAdmin || msg.sender == opolisHelper)) revert NotPermitted();
         _;
     }
     
@@ -77,10 +116,10 @@ contract OpolisPay {
      
     function payPayroll(address token, uint256 amount, uint256 payrollId) external {
         
-        require(whitelisted[token], "!whitelisted");
-        require(payrollId !=0, "!payroll");
-        require(amount !=0, "!amount");
-        require(payrolls[payrollId] == 0, "already paid");
+        if (!whitelisted[token]) revert NotWhitelisted();
+        if (payrollId == 0) revert InvalidPayroll();
+        if (amount == 0) revert InvalidAmount();
+        if (payrolls[payrollId] != 0) revert AlreadyPaid();
         
         IERC20(token).transferFrom(msg.sender, address(this), amount);
         
@@ -95,10 +134,13 @@ contract OpolisPay {
     /// @param memberId the way we'll associate the stake with a new member 
     
     function memberStake(address token, uint256 amount, uint256 memberId) public payable {
-        
-        require((whitelisted[token] && amount !=0) || (token == address(0) && msg.value != 0), "!token");
-        require(memberId !=0, "!member");
-        require(stakes[msg.sender] == 0, "already staked");
+        if (
+            !(
+                (whitelisted[token] && amount !=0) || (token == address(0) && msg.value != 0)
+            )
+        ) revert InvalidStake();
+        if (memberId == 0) revert NotMember();
+        if (stakes[msg.sender] != 0) revert AlreadyStaked();
         
         stakes[msg.sender] = amount;
         
@@ -158,7 +200,7 @@ contract OpolisPay {
     /// @dev if someone tries to send ether directly to the contract the tx will fail
 
     receive() external payable {
-        revert("no direct transfers");
+        revert DirectTransfer();
     }
     
     
@@ -172,7 +214,7 @@ contract OpolisPay {
     
     function updateDestination(address payable newDestination) external onlyAdmin returns (address){
         
-        require(newDestination != address(0), "!address");
+        if (newDestination == address(0)) revert ZeroAddress();
         destination = newDestination;
         
         emit NewDestination(destination);
@@ -185,7 +227,7 @@ contract OpolisPay {
     
     function updateAdmin(address newAdmin) external onlyAdmin returns (address){
         
-        require(newAdmin != address(0), "!address");
+        if (newAdmin == address(0)) revert ZeroAddress();
         opolisAdmin = newAdmin;
       
         emit NewAdmin(opolisAdmin);
@@ -198,7 +240,7 @@ contract OpolisPay {
     
     function updateHelper(address newHelper) external onlyAdmin returns (address){
         
-        require(newHelper != address(0), "!address");
+        if (newHelper == address(0)) revert ZeroAddress();
         opolisHelper = newHelper;
       
         emit NewHelper(opolisHelper);
@@ -211,7 +253,7 @@ contract OpolisPay {
     
     function addTokens(address[] memory newTokens) external onlyAdmin {
         
-        require(newTokens.length > 0, "!list");
+        if (newTokens.length == 0) revert ZeroTokens();
         
         for (uint256 i = 0; i < newTokens.length; i ++){
             _addTokens(newTokens[i]);
@@ -225,8 +267,8 @@ contract OpolisPay {
      *******************************************************************************/
     
     function _addTokens(address token) internal {
-        require(!whitelisted[token], "already listed");
-        require(token != address(0), "!address");
+        if (whitelisted[token]) revert AlreadyWhitelisted();
+        if (token == address(0)) revert ZeroAddress();
         supportedTokens.push(token);
         whitelisted[token] = true;
         

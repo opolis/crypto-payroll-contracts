@@ -63,7 +63,7 @@ describe("payroll works", function () {
           to: payroll.address,
           value: ethers.utils.parseEther("1.0"),
         })
-      ).to.be.revertedWith("no direct transfers");
+      ).to.be.revertedWith("DirectTransfer()");
     });
   });
 
@@ -97,7 +97,7 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .payPayroll(nonWhitelistedToken, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("!whitelisted");
+      ).to.be.revertedWith("NotWhitelisted()");
     });
 
     it("Requires you to enter a valid, non-duplicative payroll Id", async function () {
@@ -105,7 +105,7 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .payPayroll(testToken.address, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("already paid");
+      ).to.be.revertedWith("AlreadyPaid()");
     });
 
     it("Requires you to send a payroll amount above 0", async function () {
@@ -113,7 +113,7 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .payPayroll(testToken.address, payrollAmt1, 0)
-      ).to.be.revertedWith("!payroll");
+      ).to.be.revertedWith("InvalidPayroll()");
     });
   });
 
@@ -145,7 +145,7 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .memberStake(nonWhitelistedToken, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("!token");
+      ).to.be.revertedWith("InvalidStake()");
 
       const stake = await payroll
         .connect(opolisMember1)
@@ -163,7 +163,7 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .memberStake(testToken.address, payrollAmt1, 0)
-      ).to.be.revertedWith("!member");
+      ).to.be.revertedWith("NotMember()");
     });
 
     it("Can't stake twice", async function () {
@@ -174,7 +174,7 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .memberStake(testToken.address, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("already staked");
+      ).to.be.revertedWith("AlreadyStaked()");
     });
 
     it("Requires you to stake with an amount over 0", async function () {
@@ -182,14 +182,14 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .memberStake(testToken.address, 0, payrollID1)
-      ).to.be.revertedWith("!token");
+      ).to.be.revertedWith("InvalidStake()");
       await expect(
         payroll
           .connect(opolisMember1)
           .memberStake(zeroAddress, payrollAmt1, payrollID1, {
             value: ethers.utils.parseEther("0"),
           })
-      ).to.be.revertedWith("!token");
+      ).to.be.revertedWith("InvalidStake()");
     });
   });
 
@@ -229,32 +229,32 @@ describe("payroll works", function () {
   describe("Admin update parameter functions", () => {
     it("valid destination, admin, helper addresses", async () => {
       await expect(payroll.updateDestination(zeroAddress)).to.be.revertedWith(
-        "!address"
+        "ZeroAddress()"
       );
       await expect(payroll.updateAdmin(zeroAddress)).to.be.revertedWith(
-        "!address"
+        "ZeroAddress()"
       );
       await expect(payroll.updateHelper(zeroAddress)).to.be.revertedWith(
-        "!address"
+        "ZeroAddress()"
       );
     });
 
     it("onlyAdmin", async () => {
       await expect(
         payroll.connect(opolisMember1).updateDestination(newAddress)
-      ).to.be.revertedWith("!permitted");
+      ).to.be.revertedWith("NotPermitted()");
       await expect(
         payroll.connect(opolisMember1).updateAdmin(newAddress)
-      ).to.be.revertedWith("!permitted");
+      ).to.be.revertedWith("NotPermitted()");
       await expect(
         payroll.connect(opolisMember1).updateHelper(newAddress)
-      ).to.be.revertedWith("!permitted");
+      ).to.be.revertedWith("NotPermitted()");
       await expect(
         payroll.connect(opolisMember1).addTokens([newAddress])
-      ).to.be.revertedWith("!permitted");
+      ).to.be.revertedWith("NotPermitted()");
       await expect(
         payroll.connect(opolisMember1).clearBalance()
-      ).to.be.revertedWith("!permitted");
+      ).to.be.revertedWith("NotPermitted()");
     });
 
     it("update destination", async () => {
