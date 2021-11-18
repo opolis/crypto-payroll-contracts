@@ -325,7 +325,7 @@ contract OpolisPay is ReentrancyGuard {
             _addToken(newTokens[i]);
         }
         
-         emit NewToken(newTokens);  
+         emit NewTokens(newTokens);  
     }
     
     /********************************************************************************
