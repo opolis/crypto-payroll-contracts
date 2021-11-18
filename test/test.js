@@ -89,7 +89,6 @@ describe("payroll works", function () {
           payrollID1,
           payrollAmt1
         );
-      expect(await payroll.payrolls(payrollID1)).to.equal(payrollAmt1);
     });
 
     it("Requires you pay with a whitelisted token", async function () {
@@ -98,14 +97,6 @@ describe("payroll works", function () {
           .connect(opolisMember1)
           .payPayroll(nonWhitelistedToken, payrollAmt1, payrollID1)
       ).to.be.revertedWith("NotWhitelisted()");
-    });
-
-    it("Requires you to enter a valid, non-duplicative payroll Id", async function () {
-      await expect(
-        payroll
-          .connect(opolisMember1)
-          .payPayroll(testToken.address, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("AlreadyPaid()");
     });
 
     it("Requires you to send a payroll amount above 0", async function () {
@@ -137,7 +128,6 @@ describe("payroll works", function () {
           payrollAmt1,
           payrollID1
         );
-      expect(await payroll.stakes(opolisMember1.address)).to.equal(payrollAmt1);
     });
 
     it("Requires you pay with a whitelisted token or ETH", async function () {
@@ -155,7 +145,6 @@ describe("payroll works", function () {
       expect(stake)
         .to.emit(payroll, "Staked")
         .withArgs(opolisMember1.address, zeroAddress, payrollAmt1, payrollID1);
-      expect(await payroll.stakes(opolisMember1.address)).to.equal(payrollAmt1);
     });
 
     it("Requires you stake with a memberId", async function () {
@@ -164,17 +153,6 @@ describe("payroll works", function () {
           .connect(opolisMember1)
           .memberStake(testToken.address, payrollAmt1, 0)
       ).to.be.revertedWith("NotMember()");
-    });
-
-    it("Can't stake twice", async function () {
-      await payroll
-        .connect(opolisMember1)
-        .memberStake(testToken.address, payrollAmt1, payrollID1);
-      await expect(
-        payroll
-          .connect(opolisMember1)
-          .memberStake(testToken.address, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("AlreadyStaked()");
     });
 
     it("Requires you to stake with an amount over 0", async function () {

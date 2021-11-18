@@ -21,18 +21,12 @@ error InvalidPayroll();
 /// @dev amount equals zero
 error InvalidAmount();
 
-/// @dev payroll has already been paid
-error AlreadyPaid();
-
 /// @dev sender is not a member
 error NotMember();
 
 /// @dev stake must be a non zero amount of whitelisted token
 /// or non zero amount of eth
 error InvalidStake();
-
-/// @dev sender has already staked
-error AlreadyStaked();
 
 /// @dev setting one of the role to zero address
 error ZeroAddress();
@@ -67,9 +61,7 @@ contract OpolisPay {
     event NewHelper(address newHelper);
     event NewToken(address[] newTokens);
     
-    mapping (uint256 => uint256) public payrolls; // Tracks payrolls
-    mapping (uint256 => bool) public payrollWithdrawn; // Tracks withdrawls
-    mapping (address => uint256) public stakes; // Tracks stakes
+    mapping (uint256 => bool) public payrollWithdrawn; // Tracks withdrawals
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
     
     modifier onlyAdmin {
@@ -120,11 +112,8 @@ contract OpolisPay {
         if (!whitelisted[token]) revert NotWhitelisted();
         if (payrollId == 0) revert InvalidPayroll();
         if (amount == 0) revert InvalidAmount();
-        if (payrolls[payrollId] != 0) revert AlreadyPaid();
         
         IERC20(token).transferFrom(msg.sender, address(this), amount);
-        
-        payrolls[payrollId] = amount;
         
         emit Paid(msg.sender, token, payrollId, amount); 
     }
@@ -141,9 +130,6 @@ contract OpolisPay {
             )
         ) revert InvalidStake();
         if (memberId == 0) revert NotMember();
-        if (stakes[msg.sender] != 0) revert AlreadyStaked();
-        
-        stakes[msg.sender] = amount;
         
         // @dev function for auto transfering out stakes 
 
