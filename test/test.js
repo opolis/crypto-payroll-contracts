@@ -194,30 +194,76 @@ describe("payroll works", function () {
   });
 
   describe("admin accounting functions", () => {
-    it.skip("Can withdraw one payroll", async function () {});
-
-    it.skip("Can withdraw more than one payrolls", async function () {});
-
-    it.skip("Cannot withdraw a payroll with a bad payrollId'", async function () {});
-
-    it("Can clear balance if admin'", async function () {
+    beforeEach(async () => {
       await testToken.mint(opolisMember1.address, payrollAmt1);
       await testToken
         .connect(opolisMember1)
         .approve(payroll.address, payrollAmt1);
+      await payroll
+        .connect(opolisMember1)
+        .payPayroll(testToken.address, payrollAmt1, payrollID1);
+    });
 
+    it("Can withdraw one payroll", async function () {
+      const withdrawTx = await payroll.withdrawPayrolls(
+        [payrollID1],
+        [testToken.address],
+        [payrollAmt1]
+      );
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsWithdraw")
+        .withArgs(testToken.address, payrollID1, payrollAmt1);
+    });
+
+    it("Can withdraw more than one payrolls", async function () {
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken
         .connect(opolisMember2)
         .approve(payroll.address, payrollAmt2);
-
-      expect(Number(await testToken.balanceOf(payroll.address))).to.equal(0);
-      await payroll
-        .connect(opolisMember1)
-        .payPayroll(testToken.address, payrollAmt1, payrollID1);
       await payroll
         .connect(opolisMember2)
         .payPayroll(testToken.address, payrollAmt2, payrollID2);
+
+      const withdrawTx = await payroll.withdrawPayrolls(
+        [payrollID1, payrollID2],
+        [testToken.address, testToken.address],
+        [payrollAmt1, payrollAmt2]
+      );
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsWithdraw")
+        .withArgs(testToken.address, payrollID1, payrollAmt1);
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsWithdraw")
+        .withArgs(testToken.address, payrollID2, payrollAmt2);
+    });
+
+    it("Cannot withdraw a payroll thats already withdrawn", async function () {
+      const startBalance = await testToken.balanceOf(payroll.address);
+      await payroll.withdrawPayrolls(
+        [payrollID1],
+        [testToken.address],
+        [payrollAmt1]
+      );
+      const midBalance = await testToken.balanceOf(payroll.address);
+      await payroll.withdrawPayrolls(
+        [payrollID1],
+        [testToken.address],
+        [payrollAmt1]
+      );
+      const endBalance = await testToken.balanceOf(payroll.address);
+      expect(startBalance.gt(midBalance)).to.equal(true);
+      expect(midBalance.toString()).to.equal(endBalance.toString());
+    });
+
+    it("Can clear balance if admin'", async function () {
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await payroll
+        .connect(opolisMember2)
+        .payPayroll(testToken.address, payrollAmt2, payrollID2);
+
       expect((await testToken.balanceOf(payroll.address)).toString()).to.equal(
         payrollAmt1.add(payrollAmt2).toString()
       );

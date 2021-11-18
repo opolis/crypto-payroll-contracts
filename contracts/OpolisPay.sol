@@ -60,14 +60,15 @@ contract OpolisPay {
     event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
     event Staked(address staker, address token, uint256 amount, uint256 memberId);
     event Paid(address payor, address token, uint256 payrollId, uint256 amount); 
-    event OpsWithdraw(address token, uint256 payrollId, uint256 amount, bool withdrawn);
+    event OpsWithdraw(address token, uint256 payrollId, uint256 amount);
     event Sweep(address token, uint256 amount);
     event NewDestination(address destination);
     event NewAdmin(address opolisAdmin);
     event NewHelper(address newHelper);
     event NewToken(address[] newTokens);
     
-    mapping (uint256 => uint256) public payrolls; //Tracks payrolls  
+    mapping (uint256 => uint256) public payrolls; // Tracks payrolls
+    mapping (uint256 => bool) public payrollWithdrawn; // Tracks withdrawls
     mapping (address => uint256) public stakes; // Tracks stakes
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
     
@@ -155,29 +156,28 @@ contract OpolisPay {
         emit Staked(msg.sender, token, amount, memberId);
     }
 
-    // /// @notice withdraw function for admin or OpsBot to call   
-    // /// @param _payrollIds the paid payrolls we want to clear out 
-    // /// @dev we iterate through payrolls and clear them out with the funds being sent to the destination address
+    /// @notice withdraw function for admin or OpsBot to call   
+    /// @param _payrollIds the paid payrolls we want to clear out 
+    /// @dev we iterate through payrolls and clear them out with the funds being sent to the destination address
     
-    // function withdrawPayrolls(uint256[] memory _payrollIds) external onlyOpolis {
-        
-    //     require(_payrollIds.length > 0, "!payrolls");
-    //     require(_payrollIds.length < 50, "too many withdraws");
-        
-    //     for (uint8 i = 0; i < _payrollIds.length; i++){
-    //         uint256 idx = _payrollIds[i];
-    //         address token = payrolls[idx].paymentToken;
-    //         uint256 amount = payrolls[idx].paymentAmt;
+    function withdrawPayrolls(
+        uint256[] memory _payrollIds,
+        address[] memory _payrollTokens,
+        uint256[] memory _payrollAmounts
+    ) external onlyOpolis {
+        for (uint8 i = 0; i < _payrollIds.length; i++){
+            uint256 id = _payrollIds[i];
+            address token = _payrollTokens[i];
+            uint256 amount = _payrollAmounts[i];
             
-    //         if (!payrolls[idx].withdrawn) {
-    //             _withdraw(token, amount); 
-    //             payrolls[idx].withdrawn = true;
+            if (!payrollWithdrawn[id]) {
+                _withdraw(token, amount); 
+                payrollWithdrawn[id] = true;
                 
-    //             emit OpsWithdraw(token, payrolls[idx].payrollId, amount, true);
-    //         }
-    //     }
-        
-    // }
+                emit OpsWithdraw(token, id, amount);
+            }
+        }
+    }
     
     /// @notice clearBalance() is meant to be a safety function to be used for stuck funds or upgrades
     /// @dev will mark any non-withdrawn payrolls as withdrawn
