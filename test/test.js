@@ -1,6 +1,7 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, waffle } = require("hardhat");
 
+const provider = waffle.provider;
 const opolisDest = "0x7136fbDdD4DFfa2369A9283B6E90A040318011Ca";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 const nonWhitelistedToken = (newAddress =
@@ -145,6 +146,9 @@ describe("payroll works", function () {
       expect(stake)
         .to.emit(payroll, "Staked")
         .withArgs(opolisMember1.address, zeroAddress, payrollAmt1, payrollID1);
+
+      const ethBalance = await provider.getBalance(opolisDest);
+      expect(ethBalance.eq(ethers.utils.parseEther("1.0"))).to.be.true;
     });
 
     it("Requires you stake with a memberId", async function () {
