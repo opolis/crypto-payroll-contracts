@@ -2,7 +2,6 @@ pragma solidity 0.8.5;
 
 // SPDX-License-Identifier: LGPLv3
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";

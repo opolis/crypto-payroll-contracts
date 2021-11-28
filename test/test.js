@@ -17,8 +17,8 @@ describe("payroll works", function () {
   const payrollID1 = 001;
   const payrollID2 = 002;
 
-  const payrollAmt1 = ethers.utils.parseUnits("2500000000000000000000");
-  const payrollAmt2 = ethers.utils.parseUnits("3000000000000000000000");
+  const payrollAmt1 = ethers.utils.parseUnits("2500", 18);
+  const payrollAmt2 = ethers.utils.parseUnits("3000", 18);
 
   beforeEach(async () => {
     const TestToken = await ethers.getContractFactory("TestToken");
@@ -80,7 +80,7 @@ describe("payroll works", function () {
         .payPayroll(testToken.address, payrollAmt1, payrollID1);
     });
 
-    it("Let's you pay payroll with correct inputs", async function () {
+    it("Lets you pay payroll with correct inputs", async function () {
       expect(payment)
         .to.emit(payroll, "Paid")
         .withArgs(
@@ -296,6 +296,7 @@ describe("payroll works", function () {
     it("update helper", async () => {
       const tx = await payroll.updateHelper(newAddress);
       expect(tx).to.emit(payroll, "NewHelper").withArgs(newAddress);
+      expect(await payroll.opolisHelper()).to.equal(newAddress);
     });
 
     it("add tokens", async () => {
