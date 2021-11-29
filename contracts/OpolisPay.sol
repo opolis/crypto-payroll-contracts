@@ -53,14 +53,16 @@ contract OpolisPay {
     event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
     event Staked(address staker, address token, uint256 amount, uint256 memberId);
     event Paid(address payor, address token, uint256 payrollId, uint256 amount); 
-    event OpsWithdraw(address token, uint256 payrollId, uint256 amount);
+    event OpsPayrollWithdraw(address token, uint256 payrollId, uint256 amount);
+    event OpsStakeWithdraw(address token, uint256 stakeId, uint256 amount);
     event Sweep(address token, uint256 amount);
     event NewDestination(address destination);
     event NewAdmin(address opolisAdmin);
     event NewHelper(address newHelper);
     event NewToken(address[] newTokens);
     
-    mapping (uint256 => bool) public payrollWithdrawn; // Tracks withdrawals
+    mapping (uint256 => bool) public payrollWithdrawn; //Tracks payroll withdrawals
+    mapping (uint256 => bool) public stakeWithdrawn; //Tracks stake withdrawals
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
     
     modifier onlyAdmin {
@@ -135,7 +137,7 @@ contract OpolisPay {
         if (msg.value > 0 && token == address(0)){
             destination.transfer(msg.value);
         } else {
-            IERC20(token).transferFrom(msg.sender, destination, amount);
+            IERC20(token).transferFrom(msg.sender, address(this), amount);
         }
         
         emit Staked(msg.sender, token, amount, memberId);
@@ -159,7 +161,26 @@ contract OpolisPay {
                 _withdraw(token, amount); 
                 payrollWithdrawn[id] = true;
                 
-                emit OpsWithdraw(token, id, amount);
+                emit OpsPayrollWithdraw(token, id, amount);
+            }
+        }
+    }
+
+    function withdrawStakes(
+        uint256[] memory _stakeIds,
+        address[] memory _stakeTokens,
+        uint256[] memory _stakeAmounts
+    ) external onlyOpolis {
+        for (uint8 i = 0; i < _stakeIds.length; i++){
+            uint256 id = _stakeIds[i];
+            address token = _stakeTokens[i];
+            uint256 amount = _stakeAmounts[i];
+            
+            if (!stakeWithdrawn[id]) {
+                _withdraw(token, amount); 
+                stakeWithdrawn[id] = true;
+                
+                emit OpsStakeWithdraw(token, id, amount);
             }
         }
     }

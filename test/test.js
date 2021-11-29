@@ -193,7 +193,7 @@ describe("payroll works", function () {
         [payrollAmt1]
       );
       expect(withdrawTx)
-        .to.emit(payroll, "OpsWithdraw")
+        .to.emit(payroll, "OpsPayrollWithdraw")
         .withArgs(testToken.address, payrollID1, payrollAmt1);
     });
 
@@ -212,10 +212,10 @@ describe("payroll works", function () {
         [payrollAmt1, payrollAmt2]
       );
       expect(withdrawTx)
-        .to.emit(payroll, "OpsWithdraw")
+        .to.emit(payroll, "OpsPayrollWithdraw")
         .withArgs(testToken.address, payrollID1, payrollAmt1);
       expect(withdrawTx)
-        .to.emit(payroll, "OpsWithdraw")
+        .to.emit(payroll, "OpsPayrollWithdraw")
         .withArgs(testToken.address, payrollID2, payrollAmt2);
     });
 
@@ -228,6 +228,46 @@ describe("payroll works", function () {
       );
       const midBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawPayrolls(
+        [payrollID1],
+        [testToken.address],
+        [payrollAmt1]
+      );
+      const endBalance = await testToken.balanceOf(payroll.address);
+      expect(startBalance.gt(midBalance)).to.equal(true);
+      expect(midBalance.toString()).to.equal(endBalance.toString());
+    });
+
+    it("Can withdraw more than one stake", async function () {
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await payroll
+        .connect(opolisMember2)
+        .memberStake(testToken.address, payrollAmt2, payrollID2);
+
+      const withdrawTx = await payroll.withdrawStakes(
+        [payrollID1, payrollID2],
+        [testToken.address, testToken.address],
+        [payrollAmt1, payrollAmt2]
+      );
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsStakeWithdraw")
+        .withArgs(testToken.address, payrollID1, payrollAmt1);
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsStakeWithdraw")
+        .withArgs(testToken.address, payrollID2, payrollAmt2);
+    });
+
+    it("Cannot withdraw a stake thats already withdrawn", async function () {
+      const startBalance = await testToken.balanceOf(payroll.address);
+      await payroll.withdrawStakes(
+        [payrollID1],
+        [testToken.address],
+        [payrollAmt1]
+      );
+      const midBalance = await testToken.balanceOf(payroll.address);
+      await payroll.withdrawStakes(
         [payrollID1],
         [testToken.address],
         [payrollAmt1]
