@@ -145,42 +145,75 @@ contract OpolisPay {
 
     /// @notice withdraw function for admin or OpsBot to call   
     /// @param _payrollIds the paid payrolls we want to clear out 
+    /// @param _payrollTokens the tokens the payrolls were paid in
+    /// @param _payrollAmounts the amount that was paid
     /// @dev we iterate through payrolls and clear them out with the funds being sent to the destination address
     
     function withdrawPayrolls(
-        uint256[] memory _payrollIds,
-        address[] memory _payrollTokens,
-        uint256[] memory _payrollAmounts
+        uint256[] calldata _payrollIds,
+        address[] calldata _payrollTokens,
+        uint256[] calldata _payrollAmounts
     ) external onlyOpolis {
-        for (uint8 i = 0; i < _payrollIds.length; i++){
+        uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
+        for (uint16 i = 0; i < _payrollIds.length; i++){
             uint256 id = _payrollIds[i];
             address token = _payrollTokens[i];
             uint256 amount = _payrollAmounts[i];
             
             if (!payrollWithdrawn[id]) {
-                _withdraw(token, amount); 
+                for (uint8 j = 0; j < supportedTokens.length; j++) {
+                    if (supportedTokens[j] == token) {
+                        withdrawAmounts[j] += amount;
+                        break;
+                    }
+                }
                 payrollWithdrawn[id] = true;
                 
                 emit OpsPayrollWithdraw(token, id, amount);
             }
         }
+
+        for (uint16 i = 0; i < withdrawAmounts.length; i++){
+            uint256 amount = withdrawAmounts[i];
+            if (amount > 0) {
+                _withdraw(supportedTokens[i], amount);
+            }
+        }
     }
 
+    /// @notice withdraw function for admin or OpsBot to call   
+    /// @param _stakeIds the paid stakes we want to clear out 
+    /// @param _stakeTokens the tokens the stakes were paid in
+    /// @param _stakeAmounts the amount that was paid
+    /// @dev we iterate through stakes and clear them out with the funds being sent to the destination address
     function withdrawStakes(
-        uint256[] memory _stakeIds,
-        address[] memory _stakeTokens,
-        uint256[] memory _stakeAmounts
+        uint256[] calldata _stakeIds,
+        address[] calldata _stakeTokens,
+        uint256[] calldata _stakeAmounts
     ) external onlyOpolis {
-        for (uint8 i = 0; i < _stakeIds.length; i++){
+        uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
+        for (uint16 i = 0; i < _stakeIds.length; i++){
             uint256 id = _stakeIds[i];
             address token = _stakeTokens[i];
             uint256 amount = _stakeAmounts[i];
             
             if (!stakeWithdrawn[id]) {
-                _withdraw(token, amount); 
+                for (uint8 j = 0; j < supportedTokens.length; j++) {
+                    if (supportedTokens[j] == token) {
+                        withdrawAmounts[j] += amount;
+                        break;
+                    }
+                }
                 stakeWithdrawn[id] = true;
                 
                 emit OpsStakeWithdraw(token, id, amount);
+            }
+        }
+
+        for (uint16 i = 0; i < withdrawAmounts.length; i++){
+            uint256 amount = withdrawAmounts[i];
+            if (amount > 0) {
+                _withdraw(supportedTokens[i], amount);
             }
         }
     }

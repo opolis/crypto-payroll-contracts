@@ -30,6 +30,12 @@ describe("payroll works", function () {
     testToken = await TestToken.deploy();
     await testToken.deployed();
 
+    testToken2 = await TestToken.deploy();
+    await testToken2.deployed();
+
+    testToken3 = await TestToken.deploy();
+    await testToken3.deployed();
+
     payroll = await OpolisPay.deploy(
       opolisDest,
       opolisAdmin.address,
@@ -219,6 +225,58 @@ describe("payroll works", function () {
         .withArgs(testToken.address, payrollID2, payrollAmt2);
     });
 
+    it("withdraw lots of payrolls with multiple tokens at the same time", async function () {
+      await payroll.addTokens([testToken2.address, testToken3.address]);
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken2.mint(opolisMember2.address, payrollAmt2);
+      await testToken3.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await testToken2
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await testToken3
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+
+      let ids = [];
+      let tokens = [];
+      let amounts = [];
+      for (let i = 1; i < 150; i++) {
+        await payroll
+          .connect(opolisMember2)
+          .payPayroll(testToken.address, "1", i);
+
+        ids = [...ids, i];
+        tokens = [...tokens, testToken.address];
+        amounts = [...amounts, "1"];
+      }
+      for (let i = 150; i < 300; i++) {
+        await payroll
+          .connect(opolisMember2)
+          .payPayroll(testToken2.address, "1", i);
+
+        ids = [...ids, i];
+        tokens = [...tokens, testToken2.address];
+        amounts = [...amounts, "1"];
+      }
+      for (let i = 300; i < 500; i++) {
+        await payroll
+          .connect(opolisMember2)
+          .payPayroll(testToken3.address, "1", i);
+
+        ids = [...ids, i];
+        tokens = [...tokens, testToken3.address];
+        amounts = [...amounts, "1"];
+      }
+
+      const withdrawTx = await payroll.withdrawPayrolls(ids, tokens, amounts);
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsPayrollWithdraw")
+        .withArgs(testToken.address, 1, "1");
+    });
+
     it("Cannot withdraw a payroll thats already withdrawn", async function () {
       const startBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawPayrolls(
@@ -275,6 +333,58 @@ describe("payroll works", function () {
       const endBalance = await testToken.balanceOf(payroll.address);
       expect(startBalance.gt(midBalance)).to.equal(true);
       expect(midBalance.toString()).to.equal(endBalance.toString());
+    });
+
+    it("withdraw lots of stakes with multiple tokens at the same time", async function () {
+      await payroll.addTokens([testToken2.address, testToken3.address]);
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken2.mint(opolisMember2.address, payrollAmt2);
+      await testToken3.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await testToken2
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await testToken3
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+
+      let ids = [];
+      let tokens = [];
+      let amounts = [];
+      for (let i = 1; i < 150; i++) {
+        await payroll
+          .connect(opolisMember2)
+          .memberStake(testToken.address, "1", i);
+
+        ids = [...ids, i];
+        tokens = [...tokens, testToken.address];
+        amounts = [...amounts, "1"];
+      }
+      for (let i = 150; i < 300; i++) {
+        await payroll
+          .connect(opolisMember2)
+          .memberStake(testToken2.address, "1", i);
+
+        ids = [...ids, i];
+        tokens = [...tokens, testToken2.address];
+        amounts = [...amounts, "1"];
+      }
+      for (let i = 300; i < 500; i++) {
+        await payroll
+          .connect(opolisMember2)
+          .memberStake(testToken3.address, "1", i);
+
+        ids = [...ids, i];
+        tokens = [...tokens, testToken3.address];
+        amounts = [...amounts, "1"];
+      }
+
+      const withdrawTx = await payroll.withdrawStakes(ids, tokens, amounts);
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsStakeWithdraw")
+        .withArgs(testToken.address, 1, "1");
     });
 
     it("Can clear balance if admin'", async function () {
