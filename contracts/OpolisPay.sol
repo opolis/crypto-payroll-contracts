@@ -53,8 +53,8 @@ contract OpolisPay {
     event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
     event Staked(address staker, address token, uint256 amount, uint256 memberId);
     event Paid(address payor, address token, uint256 payrollId, uint256 amount); 
-    event OpsPayrollWithdraw(address[] token, uint256[] payrollId, uint256[] amount);
-    event OpsStakeWithdraw(address[] token, uint256[] stakeId, uint256[] amount);
+    event OpsPayrollWithdraw(address token, uint256 payrollId, uint256 amount);
+    event OpsStakeWithdraw(address token, uint256 stakeId, uint256 amount);
     event Sweep(address token, uint256 amount);
     event NewDestination(address destination);
     event NewAdmin(address opolisAdmin);
@@ -168,6 +168,8 @@ contract OpolisPay {
                     }
                 }
                 payrollWithdrawn[id] = true;
+                
+                emit OpsPayrollWithdraw(token, id, amount);
             }
         }
 
@@ -177,7 +179,6 @@ contract OpolisPay {
                 _withdraw(supportedTokens[i], amount);
             }
         }
-        emit OpsPayrollWithdraw(_payrollTokens, _payrollIds, _payrollAmounts);
     }
 
     /// @notice withdraw function for admin or OpsBot to call   
@@ -204,6 +205,8 @@ contract OpolisPay {
                     }
                 }
                 stakeWithdrawn[id] = true;
+                
+                emit OpsStakeWithdraw(token, id, amount);
             }
         }
 
@@ -213,7 +216,6 @@ contract OpolisPay {
                 _withdraw(supportedTokens[i], amount);
             }
         }
-        emit OpsStakeWithdraw(_stakeTokens, _stakeIds, _stakeAmounts);
     }
     
     /// @notice clearBalance() is meant to be a safety function to be used for stuck funds or upgrades

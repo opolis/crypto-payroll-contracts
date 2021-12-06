@@ -200,7 +200,7 @@ describe("payroll works", function () {
       );
       expect(withdrawTx)
         .to.emit(payroll, "OpsPayrollWithdraw")
-        .withArgs([testToken.address], [payrollID1], [payrollAmt1]);
+        .withArgs(testToken.address, payrollID1, payrollAmt1);
     });
 
     it("Can withdraw more than one payrolls", async function () {
@@ -219,14 +219,13 @@ describe("payroll works", function () {
       );
       expect(withdrawTx)
         .to.emit(payroll, "OpsPayrollWithdraw")
-        .withArgs(
-          [testToken.address, testToken.address],
-          [payrollID1, payrollID2],
-          [payrollAmt1, payrollAmt2]
-        );
+        .withArgs(testToken.address, payrollID1, payrollAmt1);
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsPayrollWithdraw")
+        .withArgs(testToken.address, payrollID2, payrollAmt2);
     });
 
-    it.only("withdraw lots of payrolls with multiple tokens at the same time", async function () {
+    it("withdraw lots of payrolls with multiple tokens at the same time", async function () {
       await payroll.addTokens([testToken2.address, testToken3.address]);
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken2.mint(opolisMember2.address, payrollAmt2);
@@ -275,7 +274,7 @@ describe("payroll works", function () {
       const withdrawTx = await payroll.withdrawPayrolls(ids, tokens, amounts);
       expect(withdrawTx)
         .to.emit(payroll, "OpsPayrollWithdraw")
-        .withArgs(tokens, ids, amounts);
+        .withArgs(testToken.address, 1, "1");
     });
 
     it("Cannot withdraw a payroll thats already withdrawn", async function () {
@@ -312,11 +311,10 @@ describe("payroll works", function () {
       );
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(
-          [testToken.address, testToken.address],
-          [payrollID1, payrollID2],
-          [payrollAmt1, payrollAmt2]
-        );
+        .withArgs(testToken.address, payrollID1, payrollAmt1);
+      expect(withdrawTx)
+        .to.emit(payroll, "OpsStakeWithdraw")
+        .withArgs(testToken.address, payrollID2, payrollAmt2);
     });
 
     it("Cannot withdraw a stake thats already withdrawn", async function () {
@@ -386,7 +384,7 @@ describe("payroll works", function () {
       const withdrawTx = await payroll.withdrawStakes(ids, tokens, amounts);
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(tokens, ids, amounts);
+        .withArgs(testToken.address, 1, "1");
     });
 
     it("Can clear balance if admin'", async function () {
