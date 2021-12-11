@@ -49,6 +49,7 @@ contract OpolisPay {
     address public opolisHelper; //Can be bot wallet for convenience 
     
     uint256[] public payrollIds; //List of payrollIds associated with payments
+    uint256[] public stakes; //List of members who have staked
     
     event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
     event Staked(address staker, address token, uint256 amount, uint256 memberId);
@@ -115,6 +116,7 @@ contract OpolisPay {
         if (amount == 0) revert InvalidAmount();
         
         IERC20(token).transferFrom(msg.sender, address(this), amount);
+        payrollIds.push(payrollId);
         
         emit Paid(msg.sender, token, payrollId, amount); 
     }
@@ -139,7 +141,8 @@ contract OpolisPay {
         } else {
             IERC20(token).transferFrom(msg.sender, address(this), amount);
         }
-        
+        stakes.push(memberId);
+
         emit Staked(msg.sender, token, amount, memberId);
     }
 
