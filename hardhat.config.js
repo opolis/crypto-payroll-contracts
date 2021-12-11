@@ -19,7 +19,14 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.5",
+  solidity: {
+    version: "0.8.5",
+    settings: {
+      optimizer: {
+        enabled: true
+      }
+    }
+  },
   defaultNetwork: "ropsten",
   networks: {
     hardhat: {},
@@ -37,7 +44,8 @@ module.exports = {
   gasReporter: {
     currency: 'USD',
     gasPrice: 100,
-    excludeContracts: ['contracts/test']
+    excludeContracts: ['contracts/test'],
+    coinmarketcap: config.coinmarketcap
   },
   etherscan: {
     // Your API key for Etherscan
