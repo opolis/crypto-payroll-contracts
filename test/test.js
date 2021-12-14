@@ -542,7 +542,7 @@ describe("payroll works", function () {
         "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
       ];
       const tx = await payroll.addTokens(tokens);
-      expect(tx).to.emit(payroll, "NewToken").withArgs(tokens);
+      expect(tx).to.emit(payroll, "NewTokens").withArgs(tokens);
     });
   });
 });

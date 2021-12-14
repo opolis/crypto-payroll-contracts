@@ -68,7 +68,7 @@ contract OpolisPay is ReentrancyGuard {
     event NewDestination(address indexed oldDestination, address indexed destination);
     event NewAdmin(address indexed oldAdmin, address indexed opolisAdmin);
     event NewHelper(address indexed oldHelper, address indexed newHelper);
-    event NewToken(address[] newTokens);
+    event NewTokens(address[] newTokens);
     
     mapping (uint256 => bool) private stakes; //Tracks used stake ids
     mapping (uint256 => bool) private payrollIds; //Tracks used payroll ids
@@ -151,12 +151,12 @@ contract OpolisPay is ReentrancyGuard {
         if (msg.value > 0 && token == address(0)){
             (bool success, ) = destination.call{value: msg.value}("");
             require(success, "Transfer failed.");
+            emit Staked(msg.sender, ETH, msg.value, memberId);
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+            emit Staked(msg.sender, token, amount, memberId);
         }
         stakes[memberId] = true;
-
-        emit Staked(msg.sender, token, amount, memberId);
     }
 
     /// @notice withdraw function for admin or OpsBot to call   
