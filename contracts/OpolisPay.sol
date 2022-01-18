@@ -144,7 +144,8 @@ contract OpolisPay {
         // @dev function for auto transfering out stakes 
 
         if (msg.value > 0 && token == address(0)){
-            destination.transfer(msg.value);
+            (bool success, ) = destination.call{value: msg.value}("");
+            require(success, "Transfer failed.");
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         }
