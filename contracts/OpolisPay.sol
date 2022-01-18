@@ -16,6 +16,12 @@ error NotWhitelisted();
 /// @dev payroll id equals zero
 error InvalidPayroll();
 
+/// @dev payroll id used
+error DuplicatePayroll();
+
+/// @dev already staked
+error DuplicateStake();
+
 /// @dev amount equals zero
 error InvalidAmount();
 
@@ -48,9 +54,6 @@ contract OpolisPay {
     address payable public destination; // Where funds are liquidated 
     address public opolisHelper; //Can be bot wallet for convenience 
     
-    uint256[] public payrollIds; //List of payrollIds associated with payments
-    uint256[] public stakes; //List of members who have staked
-    
     event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
     event Staked(address staker, address token, uint256 amount, uint256 memberId);
     event Paid(address payor, address token, uint256 payrollId, uint256 amount); 
@@ -62,6 +65,8 @@ contract OpolisPay {
     event NewHelper(address newHelper);
     event NewToken(address[] newTokens);
     
+    mapping (uint256 => bool) public stakes; //Tracks used stake ids
+    mapping (uint256 => bool) public payrollIds; //Tracks used payroll ids
     mapping (uint256 => bool) public payrollWithdrawn; //Tracks payroll withdrawals
     mapping (uint256 => bool) public stakeWithdrawn; //Tracks stake withdrawals
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
@@ -114,9 +119,10 @@ contract OpolisPay {
         if (!whitelisted[token]) revert NotWhitelisted();
         if (payrollId == 0) revert InvalidPayroll();
         if (amount == 0) revert InvalidAmount();
+        if (payrollIds[payrollId]) revert DuplicatePayroll();
         
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        payrollIds.push(payrollId);
+        payrollIds[payrollId] = true;
         
         emit Paid(msg.sender, token, payrollId, amount); 
     }
@@ -133,6 +139,7 @@ contract OpolisPay {
             )
         ) revert InvalidStake();
         if (memberId == 0) revert NotMember();
+        if (stakes[memberId]) revert DuplicateStake();
         
         // @dev function for auto transfering out stakes 
 
@@ -141,7 +148,7 @@ contract OpolisPay {
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         }
-        stakes.push(memberId);
+        stakes[memberId] = true;
 
         emit Staked(msg.sender, token, amount, memberId);
     }

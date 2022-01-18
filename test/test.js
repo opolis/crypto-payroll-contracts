@@ -87,6 +87,14 @@ describe("payroll works", function () {
         .payPayroll(testToken.address, payrollAmt1, payrollID1);
     });
 
+    it("No duplicate payroll ids", async function () {
+      await expect(
+        payroll
+          .connect(opolisMember1)
+          .payPayroll(testToken.address, payrollAmt1, payrollID1)
+      ).to.be.revertedWith("DuplicatePayroll()");
+    });
+
     it("Lets you pay payroll with correct inputs", async function () {
       expect(payment)
         .to.emit(payroll, "Paid")
@@ -121,6 +129,17 @@ describe("payroll works", function () {
       await testToken
         .connect(opolisMember1)
         .approve(payroll.address, payrollAmt1);
+    });
+
+    it("Only one stake per user", async function () {
+      await payroll
+        .connect(opolisMember1)
+        .memberStake(testToken.address, payrollAmt1, payrollID1);
+      await expect(
+        payroll
+          .connect(opolisMember1)
+          .memberStake(testToken.address, payrollAmt1, payrollID1)
+      ).to.be.revertedWith("DuplicateStake()");
     });
 
     it("Let's you stake with correct inputs", async function () {
@@ -243,7 +262,7 @@ describe("payroll works", function () {
       let ids = [];
       let tokens = [];
       let amounts = [];
-      for (let i = 1; i < 150; i++) {
+      for (let i = 10; i < 150; i++) {
         await payroll
           .connect(opolisMember2)
           .payPayroll(testToken.address, "1", i);
@@ -274,7 +293,7 @@ describe("payroll works", function () {
       const withdrawTx = await payroll.withdrawPayrolls(ids, tokens, amounts);
       expect(withdrawTx)
         .to.emit(payroll, "OpsPayrollWithdraw")
-        .withArgs(testToken.address, 1, "1");
+        .withArgs(testToken.address, 10, "1");
     });
 
     it("Cannot withdraw a payroll thats already withdrawn", async function () {
