@@ -1,9 +1,8 @@
 pragma solidity 0.8.5;
 
 // SPDX-License-Identifier: LGPLv3
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @notice custom errors for revert statements
@@ -42,6 +41,7 @@ error DirectTransfer();
 /// @title OpolisPay
 /// @notice Minimalist Contract for Crypto Payroll Payments
 contract OpolisPay {
+    using SafeERC20 for IERC20;
     
     address[] public supportedTokens; //Tokens that can be sent. 
     address public opolisAdmin; //Should be Opolis multi-sig for security
@@ -115,7 +115,7 @@ contract OpolisPay {
         if (payrollId == 0) revert InvalidPayroll();
         if (amount == 0) revert InvalidAmount();
         
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         payrollIds.push(payrollId);
         
         emit Paid(msg.sender, token, payrollId, amount); 
@@ -139,7 +139,7 @@ contract OpolisPay {
         if (msg.value > 0 && token == address(0)){
             destination.transfer(msg.value);
         } else {
-            IERC20(token).transferFrom(msg.sender, address(this), amount);
+            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         }
         stakes.push(memberId);
 
@@ -317,7 +317,7 @@ contract OpolisPay {
     }
 
     function _withdraw(address token, uint256 amount) internal {
-        IERC20(token).transfer(destination, amount);
+        IERC20(token).safeTransfer(destination, amount);
     }
     
 }
