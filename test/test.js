@@ -219,13 +219,48 @@ describe("payroll works", function () {
           [payrollAmt1]
         )
       ).to.be.revertedWith("InvalidToken()");
+
+      // stake
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await payroll
+        .connect(opolisMember2)
+        .memberStake(testToken.address, payrollAmt2, payrollID2);
       await expect(
         payroll.withdrawStakes(
-          [payrollID1],
+          [payrollID2],
           [testToken2.address],
-          [payrollAmt1]
+          [payrollAmt2]
         )
       ).to.be.revertedWith("InvalidToken()");
+    });
+
+    it("Can't withdraw non existant payroll", async function () {
+      await expect(
+        payroll.withdrawPayrolls(
+          [payrollID2],
+          [testToken.address],
+          [payrollAmt1]
+        )
+      ).to.be.revertedWith("InvalidPayroll()");
+      await expect(
+        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt1])
+      ).to.be.revertedWith("InvalidStake()");
+    });
+
+    it("Can't withdraw non existant stake", async function () {
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await payroll
+        .connect(opolisMember2)
+        .memberStake(testToken.address, payrollAmt2, payrollID2);
+      await expect(
+        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt2])
+      ).to.be.revertedWith("InvalidStake()");
     });
 
     it("Can withdraw one payroll", async function () {
@@ -332,6 +367,14 @@ describe("payroll works", function () {
     });
 
     it("Can withdraw more than one stake", async function () {
+      await testToken.mint(opolisMember1.address, payrollAmt1);
+      await testToken
+        .connect(opolisMember1)
+        .approve(payroll.address, payrollAmt1);
+      await payroll
+        .connect(opolisMember1)
+        .memberStake(testToken.address, payrollAmt1, payrollID1);
+
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken
         .connect(opolisMember2)
@@ -354,6 +397,14 @@ describe("payroll works", function () {
     });
 
     it("Cannot withdraw a stake thats already withdrawn", async function () {
+      await testToken.mint(opolisMember1.address, payrollAmt1);
+      await testToken
+        .connect(opolisMember1)
+        .approve(payroll.address, payrollAmt1);
+      await payroll
+        .connect(opolisMember1)
+        .memberStake(testToken.address, payrollAmt1, payrollID1);
+
       const startBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawStakes(
         [payrollID1],

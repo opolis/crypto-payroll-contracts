@@ -171,6 +171,8 @@ contract OpolisPay {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
         for (uint16 i = 0; i < _payrollIds.length; i++){
             uint256 id = _payrollIds[i];
+            if (!payrollIds[id]) revert InvalidPayroll();
+
             address token = _payrollTokens[i];
             uint256 amount = _payrollAmounts[i];
             
@@ -210,6 +212,8 @@ contract OpolisPay {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
         for (uint16 i = 0; i < _stakeIds.length; i++){
             uint256 id = _stakeIds[i];
+            if (!stakes[id]) revert InvalidStake();
+
             address token = _stakeTokens[i];
             uint256 amount = _stakeAmounts[i];
             
