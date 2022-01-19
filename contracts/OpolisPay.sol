@@ -169,7 +169,7 @@ contract OpolisPay {
         uint256[] calldata _payrollAmounts
     ) external onlyOpolis {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
-        for (uint16 i = 0; i < _payrollIds.length; i++){
+        for (uint256 i = 0; i < _payrollIds.length; i++){
             uint256 id = _payrollIds[i];
             if (!payrollIds[id]) revert InvalidPayroll();
 
@@ -177,7 +177,7 @@ contract OpolisPay {
             uint256 amount = _payrollAmounts[i];
             
             if (!payrollWithdrawn[id]) {
-                uint8 j;
+                uint256 j;
                 for (j; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
@@ -191,7 +191,7 @@ contract OpolisPay {
             }
         }
 
-        for (uint16 i = 0; i < withdrawAmounts.length; i++){
+        for (uint256 i = 0; i < withdrawAmounts.length; i++){
             uint256 amount = withdrawAmounts[i];
             if (amount > 0) {
                 _withdraw(supportedTokens[i], amount);
@@ -210,7 +210,7 @@ contract OpolisPay {
         uint256[] calldata _stakeAmounts
     ) external onlyOpolis {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
-        for (uint16 i = 0; i < _stakeIds.length; i++){
+        for (uint256 i = 0; i < _stakeIds.length; i++){
             uint256 id = _stakeIds[i];
             if (!stakes[id]) revert InvalidStake();
 
@@ -218,7 +218,7 @@ contract OpolisPay {
             uint256 amount = _stakeAmounts[i];
             
             if (!stakeWithdrawn[id]) {
-                uint8 j;
+                uint256 j;
                 for (j; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
@@ -232,7 +232,7 @@ contract OpolisPay {
             }
         }
 
-        for (uint16 i = 0; i < withdrawAmounts.length; i++){
+        for (uint256 i = 0; i < withdrawAmounts.length; i++){
             uint256 amount = withdrawAmounts[i];
             if (amount > 0) {
                 _withdraw(supportedTokens[i], amount);
