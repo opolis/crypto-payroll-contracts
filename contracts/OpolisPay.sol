@@ -49,7 +49,7 @@ error DirectTransfer();
 
 /// @title OpolisPay
 /// @notice Minimalist Contract for Crypto Payroll Payments
-contract OpolisPay {
+contract OpolisPay is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address[] private supportedTokens; //Tokens that can be sent. 
@@ -117,7 +117,7 @@ contract OpolisPay {
      /// @param amount the amount due for their payroll -- up to user / front-end to match 
      /// @param payrollId the way we'll associate payments with members' invoices 
      
-    function payPayroll(address token, uint256 amount, uint256 payrollId) external {
+    function payPayroll(address token, uint256 amount, uint256 payrollId) external nonReentrant {
         
         if (!whitelisted[token]) revert NotWhitelisted();
         if (payrollId == 0) revert InvalidPayroll();
@@ -135,7 +135,7 @@ contract OpolisPay {
     /// @param amount the amount due for staking -- up to user / front-end to match 
     /// @param memberId the way we'll associate the stake with a new member 
     
-    function memberStake(address token, uint256 amount, uint256 memberId) public payable {
+    function memberStake(address token, uint256 amount, uint256 memberId) public payable nonReentrant {
         if (
             !(
                 (whitelisted[token] && amount !=0) || (token == address(0) && msg.value != 0)
