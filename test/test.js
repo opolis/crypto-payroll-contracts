@@ -21,6 +21,8 @@ describe("payroll works", function () {
   const payrollAmt1 = ethers.utils.parseUnits("2500", 18);
   const payrollAmt2 = ethers.utils.parseUnits("3000", 18);
 
+  let setupTx;
+
   beforeEach(async () => {
     const TestToken = await ethers.getContractFactory("TestToken");
     const OpolisPay = await ethers.getContractFactory("OpolisPay");
@@ -46,22 +48,12 @@ describe("payroll works", function () {
   });
 
   describe("contract setup", () => {
-    it("Destination addresses should be set correctly", async function () {
-      expect(await payroll.destination()).to.equal(opolisDest);
-    });
-
-    it("OpolisAdmin addresses should be set correctly", async function () {
-      const [opolisAdmin] = await ethers.getSigners();
-      expect(await payroll.opolisAdmin()).to.equal(opolisAdmin.address);
-    });
-
-    it("OpolisHelper addresses should be set correctly", async function () {
-      const [, opolisHelper] = await ethers.getSigners();
-      expect(await payroll.opolisHelper()).to.equal(opolisHelper.address);
-    });
-
-    it("TestToken should be whitelisted", async function () {
-      expect(await payroll.supportedTokens(0)).to.equal(testToken.address);
+    it("Setup should be done correctly", async function () {
+      expect(payroll.deployTransaction)
+        .to.emit(payroll, "SetupComplete")
+        .withArgs(opolisDest, opolisAdmin.address, opolisHelper.address, [
+          testToken.address,
+        ]);
     });
 
     it("Can't send eth directly to contract", async () => {
@@ -525,19 +517,16 @@ describe("payroll works", function () {
     it("update destination", async () => {
       const tx = await payroll.updateDestination(newAddress);
       expect(tx).to.emit(payroll, "NewDestination").withArgs(newAddress);
-      expect(await payroll.destination()).to.equal(newAddress);
     });
 
     it("update admin", async () => {
       const tx = await payroll.updateAdmin(newAddress);
       expect(tx).to.emit(payroll, "NewAdmin").withArgs(newAddress);
-      expect(await payroll.opolisAdmin()).to.equal(newAddress);
     });
 
     it("update helper", async () => {
       const tx = await payroll.updateHelper(newAddress);
       expect(tx).to.emit(payroll, "NewHelper").withArgs(newAddress);
-      expect(await payroll.opolisHelper()).to.equal(newAddress);
     });
 
     it("add tokens", async () => {
@@ -548,9 +537,6 @@ describe("payroll works", function () {
       ];
       const tx = await payroll.addTokens(tokens);
       expect(tx).to.emit(payroll, "NewToken").withArgs(tokens);
-      expect(await payroll.supportedTokens(1)).to.equal(tokens[0]);
-      expect(await payroll.supportedTokens(2)).to.equal(tokens[1]);
-      expect(await payroll.supportedTokens(3)).to.equal(tokens[2]);
     });
   });
 });

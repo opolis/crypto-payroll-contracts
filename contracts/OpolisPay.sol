@@ -52,10 +52,10 @@ error DirectTransfer();
 contract OpolisPay {
     using SafeERC20 for IERC20;
 
-    address[] public supportedTokens; //Tokens that can be sent. 
-    address public opolisAdmin; //Should be Opolis multi-sig for security
-    address payable public destination; // Where funds are liquidated 
-    address public opolisHelper; //Can be bot wallet for convenience 
+    address[] private supportedTokens; //Tokens that can be sent. 
+    address private opolisAdmin; //Should be Opolis multi-sig for security
+    address payable private destination; // Where funds are liquidated 
+    address private opolisHelper; //Can be bot wallet for convenience 
     
     event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
     event Staked(address staker, address token, uint256 amount, uint256 memberId);
@@ -68,8 +68,8 @@ contract OpolisPay {
     event NewHelper(address newHelper);
     event NewToken(address[] newTokens);
     
-    mapping (uint256 => bool) public stakes; //Tracks used stake ids
-    mapping (uint256 => bool) public payrollIds; //Tracks used payroll ids
+    mapping (uint256 => bool) private stakes; //Tracks used stake ids
+    mapping (uint256 => bool) private payrollIds; //Tracks used payroll ids
     mapping (uint256 => bool) public payrollWithdrawn; //Tracks payroll withdrawals
     mapping (uint256 => bool) public stakeWithdrawn; //Tracks stake withdrawals
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
