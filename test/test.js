@@ -211,6 +211,23 @@ describe("payroll works", function () {
         .payPayroll(testToken.address, payrollAmt1, payrollID1);
     });
 
+    it("Can't withdraw non whitelisted token", async function () {
+      await expect(
+        payroll.withdrawPayrolls(
+          [payrollID1],
+          [testToken2.address],
+          [payrollAmt1]
+        )
+      ).to.be.revertedWith("InvalidToken()");
+      await expect(
+        payroll.withdrawStakes(
+          [payrollID1],
+          [testToken2.address],
+          [payrollAmt1]
+        )
+      ).to.be.revertedWith("InvalidToken()");
+    });
+
     it("Can withdraw one payroll", async function () {
       const withdrawTx = await payroll.withdrawPayrolls(
         [payrollID1],

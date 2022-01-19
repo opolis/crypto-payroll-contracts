@@ -35,6 +35,9 @@ error InvalidStake();
 /// @dev setting one of the role to zero address
 error ZeroAddress();
 
+/// @dev withdrawing non whitelisted token
+error InvalidToken();
+
 /// @dev whitelisting and empty list of tokens
 error ZeroTokens();
 
@@ -48,7 +51,7 @@ error DirectTransfer();
 /// @notice Minimalist Contract for Crypto Payroll Payments
 contract OpolisPay {
     using SafeERC20 for IERC20;
-    
+
     address[] public supportedTokens; //Tokens that can be sent. 
     address public opolisAdmin; //Should be Opolis multi-sig for security
     address payable public destination; // Where funds are liquidated 
@@ -172,12 +175,14 @@ contract OpolisPay {
             uint256 amount = _payrollAmounts[i];
             
             if (!payrollWithdrawn[id]) {
-                for (uint8 j = 0; j < supportedTokens.length; j++) {
+                uint8 j;
+                for (j; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
                     }
                 }
+                if (j == supportedTokens.length) revert InvalidToken();
                 payrollWithdrawn[id] = true;
                 
                 emit OpsPayrollWithdraw(token, id, amount);
@@ -209,12 +214,14 @@ contract OpolisPay {
             uint256 amount = _stakeAmounts[i];
             
             if (!stakeWithdrawn[id]) {
-                for (uint8 j = 0; j < supportedTokens.length; j++) {
+                uint8 j;
+                for (j; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
                     }
                 }
+                if (j == supportedTokens.length) revert InvalidToken();
                 stakeWithdrawn[id] = true;
                 
                 emit OpsStakeWithdraw(token, id, amount);
