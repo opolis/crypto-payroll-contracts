@@ -63,9 +63,9 @@ contract OpolisPay {
     event OpsPayrollWithdraw(address token, uint256 payrollId, uint256 amount);
     event OpsStakeWithdraw(address token, uint256 stakeId, uint256 amount);
     event Sweep(address token, uint256 amount);
-    event NewDestination(address destination);
-    event NewAdmin(address opolisAdmin);
-    event NewHelper(address newHelper);
+    event NewDestination(address oldDestination, address destination);
+    event NewAdmin(address oldAdmin, address opolisAdmin);
+    event NewHelper(address oldHelper, address newHelper);
     event NewToken(address[] newTokens);
     
     mapping (uint256 => bool) private stakes; //Tracks used stake ids
@@ -276,9 +276,10 @@ contract OpolisPay {
     function updateDestination(address payable newDestination) external onlyAdmin returns (address){
         
         if (newDestination == address(0)) revert ZeroAddress();
+
+        emit NewDestination(destination, newDestination);
         destination = newDestination;
         
-        emit NewDestination(destination);
         return destination;
     }
     
@@ -289,9 +290,10 @@ contract OpolisPay {
     function updateAdmin(address newAdmin) external onlyAdmin returns (address){
         
         if (newAdmin == address(0)) revert ZeroAddress();
+
+        emit NewAdmin(opolisAdmin, newAdmin);
         opolisAdmin = newAdmin;
       
-        emit NewAdmin(opolisAdmin);
         return opolisAdmin;
     }
     
@@ -302,9 +304,10 @@ contract OpolisPay {
     function updateHelper(address newHelper) external onlyAdmin returns (address){
         
         if (newHelper == address(0)) revert ZeroAddress();
+
+        emit NewHelper(opolisHelper, newHelper);
         opolisHelper = newHelper;
       
-        emit NewHelper(opolisHelper);
         return opolisHelper;
     }
     

@@ -516,17 +516,23 @@ describe("payroll works", function () {
 
     it("update destination", async () => {
       const tx = await payroll.updateDestination(newAddress);
-      expect(tx).to.emit(payroll, "NewDestination").withArgs(newAddress);
+      expect(tx)
+        .to.emit(payroll, "NewDestination")
+        .withArgs(opolisDest, newAddress);
     });
 
     it("update admin", async () => {
       const tx = await payroll.updateAdmin(newAddress);
-      expect(tx).to.emit(payroll, "NewAdmin").withArgs(newAddress);
+      expect(tx)
+        .to.emit(payroll, "NewAdmin")
+        .withArgs(opolisAdmin.address, newAddress);
     });
 
     it("update helper", async () => {
       const tx = await payroll.updateHelper(newAddress);
-      expect(tx).to.emit(payroll, "NewHelper").withArgs(newAddress);
+      expect(tx)
+        .to.emit(payroll, "NewHelper")
+        .withArgs(opolisHelper.address, newAddress);
     });
 
     it("add tokens", async () => {
