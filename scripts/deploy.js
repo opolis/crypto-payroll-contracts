@@ -8,7 +8,7 @@ const ethers = hre.ethers;
 const config = require("../config.json");
 
 async function main() {
-  const OpolisPayroll = await ethers.getContractFactory("payroll");
+  const OpolisPayroll = await ethers.getContractFactory("OpolisPay");
   const payroll = await OpolisPayroll.deploy(
       config.wyreAddress, 
       config.opolisAdmin, 

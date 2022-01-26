@@ -17,7 +17,7 @@ async function main() {
     console.log("Test token deployed to:", TT.address);
 
     console.log("Deploying test payroll contract...");
-    const OpolisPayroll = await ethers.getContractFactory("payroll");
+    const OpolisPayroll = await ethers.getContractFactory("OpolisPay");
     const payroll = await OpolisPayroll.deploy(
       config.wyreAddress, 
       config.opolisAdmin, 
