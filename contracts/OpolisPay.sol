@@ -52,7 +52,7 @@ error DirectTransfer();
 contract OpolisPay is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
-    address[] private supportedTokens; //Tokens that can be sent. 
+    address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
     address payable private destination; // Where funds are liquidated 
     address private opolisHelper; //Can be bot wallet for convenience 
