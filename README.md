@@ -3,6 +3,10 @@ Simple way for tracking crypto payroll payments for Opolis crypto payroll. This 
 
 The idea is verify when a payroll has been paid based on the user paying their payroll via our UI, where we'll programmatically submit the payrollId along with the actual payment. The other goal is to give our operations team a way to ensure 1) new member deposit in crypto are either immediately sent to Wyre, if paid in ETH, or 2) withdraw batches of new member stakes and crypto payrolls at their discretion. 
 
+## Deployments:
+
+Ropsten: [0x77c7678911647eD74A9997C5412A4DAE2d6BEE77](https://ropsten.etherscan.io/address/0x77c7678911647eD74A9997C5412A4DAE2d6BEE77)
+
 ## Core Functions 
 
 payParoll() - Function to allow a transfer of whitelisted ERC20 tokens along with the corresponding payrollID for that members' payroll. We just use payrollID rather than other information to make it harder to associate a payroll with any particular member. 

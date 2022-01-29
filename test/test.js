@@ -21,6 +21,8 @@ describe("payroll works", function () {
   const payrollAmt1 = ethers.utils.parseUnits("2500", 18);
   const payrollAmt2 = ethers.utils.parseUnits("3000", 18);
 
+  let setupTx;
+
   beforeEach(async () => {
     const TestToken = await ethers.getContractFactory("TestToken");
     const OpolisPay = await ethers.getContractFactory("OpolisPay");
@@ -46,22 +48,12 @@ describe("payroll works", function () {
   });
 
   describe("contract setup", () => {
-    it("Destination addresses should be set correctly", async function () {
-      expect(await payroll.destination()).to.equal(opolisDest);
-    });
-
-    it("OpolisAdmin addresses should be set correctly", async function () {
-      const [opolisAdmin] = await ethers.getSigners();
-      expect(await payroll.opolisAdmin()).to.equal(opolisAdmin.address);
-    });
-
-    it("OpolisHelper addresses should be set correctly", async function () {
-      const [, opolisHelper] = await ethers.getSigners();
-      expect(await payroll.opolisHelper()).to.equal(opolisHelper.address);
-    });
-
-    it("TestToken should be whitelisted", async function () {
-      expect(await payroll.supportedTokens(0)).to.equal(testToken.address);
+    it("Setup should be done correctly", async function () {
+      expect(payroll.deployTransaction)
+        .to.emit(payroll, "SetupComplete")
+        .withArgs(opolisDest, opolisAdmin.address, opolisHelper.address, [
+          testToken.address,
+        ]);
     });
 
     it("Can't send eth directly to contract", async () => {
@@ -85,6 +77,14 @@ describe("payroll works", function () {
       payment = await payroll
         .connect(opolisMember1)
         .payPayroll(testToken.address, payrollAmt1, payrollID1);
+    });
+
+    it("No duplicate payroll ids", async function () {
+      await expect(
+        payroll
+          .connect(opolisMember1)
+          .payPayroll(testToken.address, payrollAmt1, payrollID1)
+      ).to.be.revertedWith("DuplicatePayroll()");
     });
 
     it("Lets you pay payroll with correct inputs", async function () {
@@ -121,6 +121,17 @@ describe("payroll works", function () {
       await testToken
         .connect(opolisMember1)
         .approve(payroll.address, payrollAmt1);
+    });
+
+    it("Only one stake per user", async function () {
+      await payroll
+        .connect(opolisMember1)
+        .memberStake(testToken.address, payrollAmt1, payrollID1);
+      await expect(
+        payroll
+          .connect(opolisMember1)
+          .memberStake(testToken.address, payrollAmt1, payrollID1)
+      ).to.be.revertedWith("DuplicateStake()");
     });
 
     it("Let's you stake with correct inputs", async function () {
@@ -192,6 +203,58 @@ describe("payroll works", function () {
         .payPayroll(testToken.address, payrollAmt1, payrollID1);
     });
 
+    it("Can't withdraw non whitelisted token", async function () {
+      await expect(
+        payroll.withdrawPayrolls(
+          [payrollID1],
+          [testToken2.address],
+          [payrollAmt1]
+        )
+      ).to.be.revertedWith("InvalidToken()");
+
+      // stake
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await payroll
+        .connect(opolisMember2)
+        .memberStake(testToken.address, payrollAmt2, payrollID2);
+      await expect(
+        payroll.withdrawStakes(
+          [payrollID2],
+          [testToken2.address],
+          [payrollAmt2]
+        )
+      ).to.be.revertedWith("InvalidToken()");
+    });
+
+    it("Can't withdraw non existant payroll", async function () {
+      await expect(
+        payroll.withdrawPayrolls(
+          [payrollID2],
+          [testToken.address],
+          [payrollAmt1]
+        )
+      ).to.be.revertedWith("InvalidPayroll()");
+      await expect(
+        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt1])
+      ).to.be.revertedWith("InvalidStake()");
+    });
+
+    it("Can't withdraw non existant stake", async function () {
+      await testToken.mint(opolisMember2.address, payrollAmt2);
+      await testToken
+        .connect(opolisMember2)
+        .approve(payroll.address, payrollAmt2);
+      await payroll
+        .connect(opolisMember2)
+        .memberStake(testToken.address, payrollAmt2, payrollID2);
+      await expect(
+        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt2])
+      ).to.be.revertedWith("InvalidStake()");
+    });
+
     it("Can withdraw one payroll", async function () {
       const withdrawTx = await payroll.withdrawPayrolls(
         [payrollID1],
@@ -243,7 +306,7 @@ describe("payroll works", function () {
       let ids = [];
       let tokens = [];
       let amounts = [];
-      for (let i = 1; i < 150; i++) {
+      for (let i = 10; i < 150; i++) {
         await payroll
           .connect(opolisMember2)
           .payPayroll(testToken.address, "1", i);
@@ -274,7 +337,7 @@ describe("payroll works", function () {
       const withdrawTx = await payroll.withdrawPayrolls(ids, tokens, amounts);
       expect(withdrawTx)
         .to.emit(payroll, "OpsPayrollWithdraw")
-        .withArgs(testToken.address, 1, "1");
+        .withArgs(testToken.address, 10, "1");
     });
 
     it("Cannot withdraw a payroll thats already withdrawn", async function () {
@@ -296,6 +359,14 @@ describe("payroll works", function () {
     });
 
     it("Can withdraw more than one stake", async function () {
+      await testToken.mint(opolisMember1.address, payrollAmt1);
+      await testToken
+        .connect(opolisMember1)
+        .approve(payroll.address, payrollAmt1);
+      await payroll
+        .connect(opolisMember1)
+        .memberStake(testToken.address, payrollAmt1, payrollID1);
+
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken
         .connect(opolisMember2)
@@ -318,6 +389,14 @@ describe("payroll works", function () {
     });
 
     it("Cannot withdraw a stake thats already withdrawn", async function () {
+      await testToken.mint(opolisMember1.address, payrollAmt1);
+      await testToken
+        .connect(opolisMember1)
+        .approve(payroll.address, payrollAmt1);
+      await payroll
+        .connect(opolisMember1)
+        .memberStake(testToken.address, payrollAmt1, payrollID1);
+
       const startBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawStakes(
         [payrollID1],
@@ -437,20 +516,23 @@ describe("payroll works", function () {
 
     it("update destination", async () => {
       const tx = await payroll.updateDestination(newAddress);
-      expect(tx).to.emit(payroll, "NewDestination").withArgs(newAddress);
-      expect(await payroll.destination()).to.equal(newAddress);
+      expect(tx)
+        .to.emit(payroll, "NewDestination")
+        .withArgs(opolisDest, newAddress);
     });
 
     it("update admin", async () => {
       const tx = await payroll.updateAdmin(newAddress);
-      expect(tx).to.emit(payroll, "NewAdmin").withArgs(newAddress);
-      expect(await payroll.opolisAdmin()).to.equal(newAddress);
+      expect(tx)
+        .to.emit(payroll, "NewAdmin")
+        .withArgs(opolisAdmin.address, newAddress);
     });
 
     it("update helper", async () => {
       const tx = await payroll.updateHelper(newAddress);
-      expect(tx).to.emit(payroll, "NewHelper").withArgs(newAddress);
-      expect(await payroll.opolisHelper()).to.equal(newAddress);
+      expect(tx)
+        .to.emit(payroll, "NewHelper")
+        .withArgs(opolisHelper.address, newAddress);
     });
 
     it("add tokens", async () => {
@@ -461,9 +543,6 @@ describe("payroll works", function () {
       ];
       const tx = await payroll.addTokens(tokens);
       expect(tx).to.emit(payroll, "NewToken").withArgs(tokens);
-      expect(await payroll.supportedTokens(1)).to.equal(tokens[0]);
-      expect(await payroll.supportedTokens(2)).to.equal(tokens[1]);
-      expect(await payroll.supportedTokens(3)).to.equal(tokens[2]);
     });
   });
 });

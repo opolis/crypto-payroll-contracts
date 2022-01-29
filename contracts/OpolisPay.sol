@@ -1,9 +1,8 @@
 pragma solidity 0.8.5;
 
 // SPDX-License-Identifier: LGPLv3
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @notice custom errors for revert statements
@@ -16,6 +15,12 @@ error NotWhitelisted();
 
 /// @dev payroll id equals zero
 error InvalidPayroll();
+
+/// @dev payroll id used
+error DuplicatePayroll();
+
+/// @dev already staked
+error DuplicateStake();
 
 /// @dev amount equals zero
 error InvalidAmount();
@@ -30,6 +35,9 @@ error InvalidStake();
 /// @dev setting one of the role to zero address
 error ZeroAddress();
 
+/// @dev withdrawing non whitelisted token
+error InvalidToken();
+
 /// @dev whitelisting and empty list of tokens
 error ZeroTokens();
 
@@ -41,15 +49,13 @@ error DirectTransfer();
 
 /// @title OpolisPay
 /// @notice Minimalist Contract for Crypto Payroll Payments
-contract OpolisPay {
-    
+contract OpolisPay is ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     address[] public supportedTokens; //Tokens that can be sent. 
-    address public opolisAdmin; //Should be Opolis multi-sig for security
-    address payable public destination; // Where funds are liquidated 
-    address public opolisHelper; //Can be bot wallet for convenience 
-    
-    uint256[] public payrollIds; //List of payrollIds associated with payments
-    uint256[] public stakes; //List of members who have staked
+    address private opolisAdmin; //Should be Opolis multi-sig for security
+    address payable private destination; // Where funds are liquidated 
+    address private opolisHelper; //Can be bot wallet for convenience 
     
     event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
     event Staked(address staker, address token, uint256 amount, uint256 memberId);
@@ -57,11 +63,13 @@ contract OpolisPay {
     event OpsPayrollWithdraw(address token, uint256 payrollId, uint256 amount);
     event OpsStakeWithdraw(address token, uint256 stakeId, uint256 amount);
     event Sweep(address token, uint256 amount);
-    event NewDestination(address destination);
-    event NewAdmin(address opolisAdmin);
-    event NewHelper(address newHelper);
+    event NewDestination(address oldDestination, address destination);
+    event NewAdmin(address oldAdmin, address opolisAdmin);
+    event NewHelper(address oldHelper, address newHelper);
     event NewToken(address[] newTokens);
     
+    mapping (uint256 => bool) private stakes; //Tracks used stake ids
+    mapping (uint256 => bool) private payrollIds; //Tracks used payroll ids
     mapping (uint256 => bool) public payrollWithdrawn; //Tracks payroll withdrawals
     mapping (uint256 => bool) public stakeWithdrawn; //Tracks stake withdrawals
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
@@ -109,14 +117,15 @@ contract OpolisPay {
      /// @param amount the amount due for their payroll -- up to user / front-end to match 
      /// @param payrollId the way we'll associate payments with members' invoices 
      
-    function payPayroll(address token, uint256 amount, uint256 payrollId) external {
+    function payPayroll(address token, uint256 amount, uint256 payrollId) external nonReentrant {
         
         if (!whitelisted[token]) revert NotWhitelisted();
         if (payrollId == 0) revert InvalidPayroll();
         if (amount == 0) revert InvalidAmount();
+        if (payrollIds[payrollId]) revert DuplicatePayroll();
         
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
-        payrollIds.push(payrollId);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        payrollIds[payrollId] = true;
         
         emit Paid(msg.sender, token, payrollId, amount); 
     }
@@ -126,22 +135,24 @@ contract OpolisPay {
     /// @param amount the amount due for staking -- up to user / front-end to match 
     /// @param memberId the way we'll associate the stake with a new member 
     
-    function memberStake(address token, uint256 amount, uint256 memberId) public payable {
+    function memberStake(address token, uint256 amount, uint256 memberId) public payable nonReentrant {
         if (
             !(
                 (whitelisted[token] && amount !=0) || (token == address(0) && msg.value != 0)
             )
         ) revert InvalidStake();
         if (memberId == 0) revert NotMember();
+        if (stakes[memberId]) revert DuplicateStake();
         
         // @dev function for auto transfering out stakes 
 
         if (msg.value > 0 && token == address(0)){
-            destination.transfer(msg.value);
+            (bool success, ) = destination.call{value: msg.value}("");
+            require(success, "Transfer failed.");
         } else {
-            IERC20(token).transferFrom(msg.sender, address(this), amount);
+            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         }
-        stakes.push(memberId);
+        stakes[memberId] = true;
 
         emit Staked(msg.sender, token, amount, memberId);
     }
@@ -158,25 +169,29 @@ contract OpolisPay {
         uint256[] calldata _payrollAmounts
     ) external onlyOpolis {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
-        for (uint16 i = 0; i < _payrollIds.length; i++){
+        for (uint256 i = 0; i < _payrollIds.length; i++){
             uint256 id = _payrollIds[i];
+            if (!payrollIds[id]) revert InvalidPayroll();
+
             address token = _payrollTokens[i];
             uint256 amount = _payrollAmounts[i];
             
             if (!payrollWithdrawn[id]) {
-                for (uint8 j = 0; j < supportedTokens.length; j++) {
+                uint256 j;
+                for (j; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
                     }
                 }
+                if (j == supportedTokens.length) revert InvalidToken();
                 payrollWithdrawn[id] = true;
                 
                 emit OpsPayrollWithdraw(token, id, amount);
             }
         }
 
-        for (uint16 i = 0; i < withdrawAmounts.length; i++){
+        for (uint256 i = 0; i < withdrawAmounts.length; i++){
             uint256 amount = withdrawAmounts[i];
             if (amount > 0) {
                 _withdraw(supportedTokens[i], amount);
@@ -195,25 +210,29 @@ contract OpolisPay {
         uint256[] calldata _stakeAmounts
     ) external onlyOpolis {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
-        for (uint16 i = 0; i < _stakeIds.length; i++){
+        for (uint256 i = 0; i < _stakeIds.length; i++){
             uint256 id = _stakeIds[i];
+            if (!stakes[id]) revert InvalidStake();
+
             address token = _stakeTokens[i];
             uint256 amount = _stakeAmounts[i];
             
             if (!stakeWithdrawn[id]) {
-                for (uint8 j = 0; j < supportedTokens.length; j++) {
+                uint256 j;
+                for (j; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
                     }
                 }
+                if (j == supportedTokens.length) revert InvalidToken();
                 stakeWithdrawn[id] = true;
                 
                 emit OpsStakeWithdraw(token, id, amount);
             }
         }
 
-        for (uint16 i = 0; i < withdrawAmounts.length; i++){
+        for (uint256 i = 0; i < withdrawAmounts.length; i++){
             uint256 amount = withdrawAmounts[i];
             if (amount > 0) {
                 _withdraw(supportedTokens[i], amount);
@@ -257,9 +276,10 @@ contract OpolisPay {
     function updateDestination(address payable newDestination) external onlyAdmin returns (address){
         
         if (newDestination == address(0)) revert ZeroAddress();
+
+        emit NewDestination(destination, newDestination);
         destination = newDestination;
         
-        emit NewDestination(destination);
         return destination;
     }
     
@@ -270,9 +290,10 @@ contract OpolisPay {
     function updateAdmin(address newAdmin) external onlyAdmin returns (address){
         
         if (newAdmin == address(0)) revert ZeroAddress();
+
+        emit NewAdmin(opolisAdmin, newAdmin);
         opolisAdmin = newAdmin;
       
-        emit NewAdmin(opolisAdmin);
         return opolisAdmin;
     }
     
@@ -283,9 +304,10 @@ contract OpolisPay {
     function updateHelper(address newHelper) external onlyAdmin returns (address){
         
         if (newHelper == address(0)) revert ZeroAddress();
+
+        emit NewHelper(opolisHelper, newHelper);
         opolisHelper = newHelper;
       
-        emit NewHelper(opolisHelper);
         return opolisHelper;
     }
     
@@ -317,7 +339,7 @@ contract OpolisPay {
     }
 
     function _withdraw(address token, uint256 amount) internal {
-        IERC20(token).transfer(destination, amount);
+        IERC20(token).safeTransfer(destination, amount);
     }
     
 }
