@@ -52,21 +52,24 @@ error DirectTransfer();
 contract OpolisPay is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address internal constant ZERO = address(0);
+
     address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
     address payable private destination; // Where funds are liquidated 
     address private opolisHelper; //Can be bot wallet for convenience 
     
-    event SetupComplete(address payable destination, address admin, address helper, address[] tokens);
-    event Staked(address staker, address token, uint256 amount, uint256 memberId);
-    event Paid(address payor, address token, uint256 payrollId, uint256 amount); 
-    event OpsPayrollWithdraw(address token, uint256 payrollId, uint256 amount);
-    event OpsStakeWithdraw(address token, uint256 stakeId, uint256 amount);
-    event Sweep(address token, uint256 amount);
-    event NewDestination(address oldDestination, address destination);
-    event NewAdmin(address oldAdmin, address opolisAdmin);
-    event NewHelper(address oldHelper, address newHelper);
-    event NewToken(address[] newTokens);
+    event SetupComplete(address indexed destination, address indexed admin, address indexed helper, address[] tokens);
+    event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId);
+    event Paid(address indexed payor, address indexed token, uint256 indexed payrollId, uint256 amount); 
+    event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
+    event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 amount);
+    event Sweep(address indexed token, uint256 amount);
+    event NewDestination(address indexed oldDestination, address indexed destination);
+    event NewAdmin(address indexed oldAdmin, address indexed opolisAdmin);
+    event NewHelper(address indexed oldHelper, address indexed newHelper);
+    event NewTokens(address[] newTokens);
     
     mapping (uint256 => bool) private stakes; //Tracks used stake ids
     mapping (uint256 => bool) private payrollIds; //Tracks used payroll ids
@@ -101,7 +104,7 @@ contract OpolisPay is ReentrancyGuard {
         opolisHelper = _opolisHelper;
         
         for (uint256 i = 0; i < _tokenList.length; i++) {
-            _addTokens(_tokenList[i]);
+            _addToken(_tokenList[i]);
         }
         
         emit SetupComplete(destination, opolisAdmin, opolisHelper, _tokenList);
@@ -138,7 +141,7 @@ contract OpolisPay is ReentrancyGuard {
     function memberStake(address token, uint256 amount, uint256 memberId) public payable nonReentrant {
         if (
             !(
-                (whitelisted[token] && amount !=0) || (token == address(0) && msg.value != 0)
+                (whitelisted[token] && amount !=0) || (token == ETH && msg.value != 0)
             )
         ) revert InvalidStake();
         if (memberId == 0) revert NotMember();
@@ -146,15 +149,15 @@ contract OpolisPay is ReentrancyGuard {
         
         // @dev function for auto transfering out stakes 
 
-        if (msg.value > 0 && token == address(0)){
+        if (msg.value > 0 && token == ETH){
             (bool success, ) = destination.call{value: msg.value}("");
             require(success, "Transfer failed.");
+            emit Staked(msg.sender, ETH, msg.value, memberId);
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+            emit Staked(msg.sender, token, amount, memberId);
         }
         stakes[memberId] = true;
-
-        emit Staked(msg.sender, token, amount, memberId);
     }
 
     /// @notice withdraw function for admin or OpsBot to call   
@@ -275,7 +278,7 @@ contract OpolisPay is ReentrancyGuard {
     
     function updateDestination(address payable newDestination) external onlyAdmin returns (address){
         
-        if (newDestination == address(0)) revert ZeroAddress();
+        if (newDestination == ZERO) revert ZeroAddress();
 
         emit NewDestination(destination, newDestination);
         destination = newDestination;
@@ -289,7 +292,7 @@ contract OpolisPay is ReentrancyGuard {
     
     function updateAdmin(address newAdmin) external onlyAdmin returns (address){
         
-        if (newAdmin == address(0)) revert ZeroAddress();
+        if (newAdmin == ZERO) revert ZeroAddress();
 
         emit NewAdmin(opolisAdmin, newAdmin);
         opolisAdmin = newAdmin;
@@ -303,7 +306,7 @@ contract OpolisPay is ReentrancyGuard {
     
     function updateHelper(address newHelper) external onlyAdmin returns (address){
         
-        if (newHelper == address(0)) revert ZeroAddress();
+        if (newHelper == ZERO) revert ZeroAddress();
 
         emit NewHelper(opolisHelper, newHelper);
         opolisHelper = newHelper;
@@ -320,19 +323,19 @@ contract OpolisPay is ReentrancyGuard {
         if (newTokens.length == 0) revert ZeroTokens();
         
         for (uint256 i = 0; i < newTokens.length; i ++){
-            _addTokens(newTokens[i]);
+            _addToken(newTokens[i]);
         }
         
-         emit NewToken(newTokens);  
+         emit NewTokens(newTokens);  
     }
     
     /********************************************************************************
                              INTERNAL FUNCTIONS 
      *******************************************************************************/
     
-    function _addTokens(address token) internal {
+    function _addToken(address token) internal {
         if (whitelisted[token]) revert AlreadyWhitelisted();
-        if (token == address(0)) revert ZeroAddress();
+        if (token == ZERO) revert ZeroAddress();
         supportedTokens.push(token);
         whitelisted[token] = true;
         
