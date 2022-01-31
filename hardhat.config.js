@@ -37,7 +37,7 @@ module.exports = {
 			accounts: [config.privateKey],
 		},
     mumbai: {
-			url: `https://mumbai.infura.io/v3/${config.infura}`,
+			url: `https://matic-mumbai.chainstacklabs.com`,
 			accounts: [config.privateKey],
 		},
 		mainnet: {
