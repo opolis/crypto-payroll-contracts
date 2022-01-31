@@ -53,6 +53,7 @@ contract OpolisPay is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address internal constant ZERO = address(0);
 
     address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
@@ -140,7 +141,7 @@ contract OpolisPay is ReentrancyGuard {
     function memberStake(address token, uint256 amount, uint256 memberId) public payable nonReentrant {
         if (
             !(
-                (whitelisted[token] && amount !=0) || (token == address(0) && msg.value != 0)
+                (whitelisted[token] && amount !=0) || (token == ETH && msg.value != 0)
             )
         ) revert InvalidStake();
         if (memberId == 0) revert NotMember();
@@ -148,7 +149,7 @@ contract OpolisPay is ReentrancyGuard {
         
         // @dev function for auto transfering out stakes 
 
-        if (msg.value > 0 && token == address(0)){
+        if (msg.value > 0 && token == ETH){
             (bool success, ) = destination.call{value: msg.value}("");
             require(success, "Transfer failed.");
             emit Staked(msg.sender, ETH, msg.value, memberId);
@@ -277,7 +278,7 @@ contract OpolisPay is ReentrancyGuard {
     
     function updateDestination(address payable newDestination) external onlyAdmin returns (address){
         
-        if (newDestination == address(0)) revert ZeroAddress();
+        if (newDestination == ZERO) revert ZeroAddress();
 
         emit NewDestination(destination, newDestination);
         destination = newDestination;
@@ -291,7 +292,7 @@ contract OpolisPay is ReentrancyGuard {
     
     function updateAdmin(address newAdmin) external onlyAdmin returns (address){
         
-        if (newAdmin == address(0)) revert ZeroAddress();
+        if (newAdmin == ZERO) revert ZeroAddress();
 
         emit NewAdmin(opolisAdmin, newAdmin);
         opolisAdmin = newAdmin;
@@ -305,7 +306,7 @@ contract OpolisPay is ReentrancyGuard {
     
     function updateHelper(address newHelper) external onlyAdmin returns (address){
         
-        if (newHelper == address(0)) revert ZeroAddress();
+        if (newHelper == ZERO) revert ZeroAddress();
 
         emit NewHelper(opolisHelper, newHelper);
         opolisHelper = newHelper;
@@ -332,9 +333,9 @@ contract OpolisPay is ReentrancyGuard {
                              INTERNAL FUNCTIONS 
      *******************************************************************************/
     
-    function _addTokens(address token) internal {
+    function _addToken(address token) internal {
         if (whitelisted[token]) revert AlreadyWhitelisted();
-        if (token == address(0)) revert ZeroAddress();
+        if (token == ZERO) revert ZeroAddress();
         supportedTokens.push(token);
         whitelisted[token] = true;
         

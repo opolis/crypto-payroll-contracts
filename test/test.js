@@ -4,6 +4,7 @@ const { ethers, waffle } = require("hardhat");
 const provider = waffle.provider;
 const opolisDest = "0x7136fbDdD4DFfa2369A9283B6E90A040318011Ca";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
+const ethAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const nonWhitelistedToken = (newAddress =
   "0x2DaA35962A6D43EB54C48367b33d0B379C930E5e");
 
@@ -157,12 +158,12 @@ describe("payroll works", function () {
 
       const stake = await payroll
         .connect(opolisMember1)
-        .memberStake(zeroAddress, payrollAmt1, payrollID1, {
+        .memberStake(ethAddress, payrollAmt1, payrollID1, {
           value: ethers.utils.parseEther("1.0"),
         });
       expect(stake)
         .to.emit(payroll, "Staked")
-        .withArgs(opolisMember1.address, zeroAddress, payrollAmt1, payrollID1);
+        .withArgs(opolisMember1.address, ethAddress, ethers.utils.parseEther("1.0").toString(), payrollID1);
 
       const ethBalance = await provider.getBalance(opolisDest);
       expect(ethBalance.eq(ethers.utils.parseEther("1.0"))).to.be.true;
