@@ -5,7 +5,9 @@ The idea is verify when a payroll has been paid based on the user paying their p
 
 ## Deployments:
 
-Ropsten: [0x77c7678911647eD74A9997C5412A4DAE2d6BEE77](https://ropsten.etherscan.io/address/0x77c7678911647eD74A9997C5412A4DAE2d6BEE77)
+Ropsten: [0x51E9210d7Ee7a8e7064C8a71F0cb0baA2205F298](https://ropsten.etherscan.io/address/0x77c7678911647eD74A9997C5412A4DAE2d6BEE77)
+
+Mumbai: [0x347434c2BbBa4193bd56184bD768f4a4139Da39c](https://mumbai.polygonscan.com/address/0x347434c2BbBa4193bd56184bD768f4a4139Da39c)
 
 ## Core Functions 
 
