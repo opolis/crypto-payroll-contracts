@@ -36,6 +36,10 @@ module.exports = {
 			url: `https://ropsten.infura.io/v3/${config.infura}`,
 			accounts: [config.privateKey],
 		},
+    mumbai: {
+			url: `https://mumbai.infura.io/v3/${config.infura}`,
+			accounts: [config.privateKey],
+		},
 		mainnet: {
 			url: `https://mainnet.infura.io/v3/${config.infura}`,
 			accounts: [config.privateKey],
