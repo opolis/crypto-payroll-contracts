@@ -40,6 +40,15 @@ module.exports = {
 			url: `https://matic-mumbai.chainstacklabs.com`,
 			accounts: [config.privateKey],
 		},
+    polygon: {
+      url: "https://rpc-mainnet.maticvigil.com",
+      accounts: [config.privateKey],
+      gasPrice: 8000000000,
+    },
+    xdai: {
+			url: `https://rpc.xdaichain.com`,
+			accounts: [config.privateKey],
+		},
 		mainnet: {
 			url: `https://mainnet.infura.io/v3/${config.infura}`,
 			accounts: [config.privateKey],

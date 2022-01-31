@@ -34,9 +34,3 @@ OnlyAdmin - is meant to restrict these functions to only being called by a multi
 destination - is the address provided by Wyre where we can send tokens and ETH for auto-liquidation. 
 
 supportedTokens[] - is the list of ERC20 tokens we'll accept. Admins will have the ability to update this list. 
-
-
-
-
-
-
