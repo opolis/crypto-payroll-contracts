@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
 require("@nomiclabs/hardhat-etherscan");
+require('hardhat-abi-exporter');
 
 const config = require("./config.json");
 
@@ -65,6 +66,13 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: config.etherscan
-  }
+    apiKey: config.etherscan // config.polyscan for polygon/mumbai
+  },
+  abiExporter: {
+    path: './abi',
+    clear: true,
+    flat: true,
+    runOnCompile: true,
+    // only: [],
+  },
 };;
