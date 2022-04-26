@@ -22,6 +22,9 @@ describe("payroll works", function () {
   const payrollAmt1 = ethers.utils.parseUnits("2500", 18);
   const payrollAmt2 = ethers.utils.parseUnits("3000", 18);
 
+  const stakeApproval = ethers.utils.parseUnits("100000", 18);
+
+
   let setupTx;
 
   beforeEach(async () => {
@@ -118,21 +121,28 @@ describe("payroll works", function () {
 
   describe("stake", () => {
     beforeEach(async () => {
-      await testToken.mint(opolisMember1.address, payrollAmt1);
+      await testToken.mint(opolisMember1.address, stakeApproval);
       await testToken
         .connect(opolisMember1)
-        .approve(payroll.address, payrollAmt1);
+        .approve(payroll.address, stakeApproval);
     });
 
-    it("Only one stake per user", async function () {
+    it("Let's a member stake multiple times", async function () {
       await payroll
         .connect(opolisMember1)
         .memberStake(testToken.address, payrollAmt1, payrollID1);
       await expect(
         payroll
           .connect(opolisMember1)
-          .memberStake(testToken.address, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("DuplicateStake()");
+          .memberStake(testToken.address, payrollAmt2, payrollID1)
+      ).to.emit(payroll, "Staked")
+      .withArgs(
+        opolisMember1.address,
+        testToken.address,
+        payrollAmt2,
+        payrollID1,
+        2
+      );
     });
 
     it("Let's you stake with correct inputs", async function () {
@@ -145,7 +155,8 @@ describe("payroll works", function () {
           opolisMember1.address,
           testToken.address,
           payrollAmt1,
-          payrollID1
+          payrollID1,
+          1
         );
     });
 
@@ -163,7 +174,7 @@ describe("payroll works", function () {
         });
       expect(stake)
         .to.emit(payroll, "Staked")
-        .withArgs(opolisMember1.address, ethAddress, ethers.utils.parseEther("1.0").toString(), payrollID1);
+        .withArgs(opolisMember1.address, ethAddress, ethers.utils.parseEther("1.0").toString(), payrollID1, 1);
 
       const ethBalance = await provider.getBalance(opolisDest);
       expect(ethBalance.eq(ethers.utils.parseEther("1.0"))).to.be.true;

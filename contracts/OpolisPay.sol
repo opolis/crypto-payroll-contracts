@@ -19,9 +19,6 @@ error InvalidPayroll();
 /// @dev payroll id used
 error DuplicatePayroll();
 
-/// @dev already staked
-error DuplicateStake();
-
 /// @dev amount equals zero
 error InvalidAmount();
 
@@ -58,10 +55,12 @@ contract OpolisPay is ReentrancyGuard {
     address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
     address payable private destination; // Where funds are liquidated 
-    address private opolisHelper; //Can be bot wallet for convenience 
+    address private opolisHelper; //Can be bot wallet for convenience
+
+    uint256 public stakeCount = 0;  
     
     event SetupComplete(address indexed destination, address indexed admin, address indexed helper, address[] tokens);
-    event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId);
+    event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId, uint256 stakeNumber);
     event Paid(address indexed payor, address indexed token, uint256 indexed payrollId, uint256 amount); 
     event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
     event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 amount);
@@ -71,7 +70,7 @@ contract OpolisPay is ReentrancyGuard {
     event NewHelper(address indexed oldHelper, address indexed newHelper);
     event NewTokens(address[] newTokens);
     
-    mapping (uint256 => bool) private stakes; //Tracks used stake ids
+    mapping (uint256 => uint256) private stakes; //Tracks used stake ids
     mapping (uint256 => bool) private payrollIds; //Tracks used payroll ids
     mapping (uint256 => bool) public payrollWithdrawn; //Tracks payroll withdrawals
     mapping (uint256 => bool) public stakeWithdrawn; //Tracks stake withdrawals
@@ -145,19 +144,25 @@ contract OpolisPay is ReentrancyGuard {
             )
         ) revert InvalidStake();
         if (memberId == 0) revert NotMember();
-        if (stakes[memberId]) revert DuplicateStake();
+
+        if (stakes[memberId] < 1){
+            stakes[memberId] = 1;
+        } else {
+            uint256 count = stakes[memberId];
+            stakes[memberId] += count;
+        }
         
         // @dev function for auto transfering out stakes 
 
         if (msg.value > 0 && token == ETH){
             (bool success, ) = destination.call{value: msg.value}("");
             require(success, "Transfer failed.");
-            emit Staked(msg.sender, ETH, msg.value, memberId);
+            emit Staked(msg.sender, ETH, msg.value, memberId, stakes[memberId]);
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-            emit Staked(msg.sender, token, amount, memberId);
+            emit Staked(msg.sender, token, amount, memberId, stakes[memberId]);
         }
-        stakes[memberId] = true;
+        
     }
 
     /// @notice withdraw function for admin or OpsBot to call   
@@ -215,7 +220,7 @@ contract OpolisPay is ReentrancyGuard {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
         for (uint256 i = 0; i < _stakeIds.length; i++){
             uint256 id = _stakeIds[i];
-            if (!stakes[id]) revert InvalidStake();
+            if (stakes[id] < 1) revert InvalidStake();
 
             address token = _stakeTokens[i];
             uint256 amount = _stakeAmounts[i];
