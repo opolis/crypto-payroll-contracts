@@ -148,8 +148,7 @@ contract OpolisPay is ReentrancyGuard {
         if (memberId == 0) revert NotMember();
 
         // @dev increments the stake id for each member
-        uint256 stakeCount = stakes[memberId];
-        stakes[memberId] = stakeCount + 1; 
+        uint stakeCount = ++stakes[memberId]; 
         
         // @dev function for auto transfering out stakes 
 
@@ -159,7 +158,7 @@ contract OpolisPay is ReentrancyGuard {
             emit Staked(msg.sender, ETH, msg.value, memberId, stakes[memberId]);
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-            emit Staked(msg.sender, token, amount, memberId, stakes[memberId]);
+            emit Staked(msg.sender, token, amount, memberId, stakeCount);
         }
         
     }
@@ -169,7 +168,6 @@ contract OpolisPay is ReentrancyGuard {
     /// @param _payrollTokens the tokens the payrolls were paid in
     /// @param _payrollAmounts the amount that was paid
     /// @dev we iterate through payrolls and clear them out with the funds being sent to the destination address
-    
     function withdrawPayrolls(
         uint256[] calldata _payrollIds,
         address[] calldata _payrollTokens,
@@ -185,7 +183,7 @@ contract OpolisPay is ReentrancyGuard {
             
             if (!payrollWithdrawn[id]) {
                 uint256 j;
-                for (j; j < supportedTokens.length; j++) {
+                for (; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
@@ -230,7 +228,7 @@ contract OpolisPay is ReentrancyGuard {
             
             if (stakeWithdrawn[id] < num) {
                 uint256 j;
-                for (j; j < supportedTokens.length; j++) {
+                for (; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;

@@ -452,6 +452,7 @@ describe("payroll works", function () {
           .memberStake(testToken.address, "1", i);
 
         ids = [...ids, i];
+        nums = [...nums, 1]
         tokens = [...tokens, testToken.address];
         amounts = [...amounts, "1"];
       }
@@ -461,23 +462,25 @@ describe("payroll works", function () {
           .memberStake(testToken2.address, "1", i);
 
         ids = [...ids, i];
+        nums = [...nums, 1]
         tokens = [...tokens, testToken2.address];
         amounts = [...amounts, "1"];
       }
-      for (let i = 300; i < 500; i++) {
+      for (let i = 300; i < 450; i++) {
         await payroll
           .connect(opolisMember2)
           .memberStake(testToken3.address, "1", i);
 
         ids = [...ids, i];
+        nums = [...nums, 1]
         tokens = [...tokens, testToken3.address];
         amounts = [...amounts, "1"];
       }
 
-      const withdrawTx = await payroll.withdrawStakes(ids, tokens, amounts);
+      const withdrawTx = await payroll.withdrawStakes(ids, nums, tokens, amounts);
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(testToken.address, 1, "1");
+        .withArgs(testToken.address, 1, 1, "1");
     });
 
     it("Can clear balance if admin'", async function () {
