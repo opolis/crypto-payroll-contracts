@@ -235,6 +235,7 @@ describe("payroll works", function () {
       await expect(
         payroll.withdrawStakes(
           [payrollID2],
+          [1],
           [testToken2.address],
           [payrollAmt2]
         )
@@ -249,12 +250,9 @@ describe("payroll works", function () {
           [payrollAmt1]
         )
       ).to.be.revertedWith("InvalidPayroll()");
-      await expect(
-        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt1])
-      ).to.be.revertedWith("InvalidStake()");
     });
 
-    it("Can't withdraw non existant stake", async function () {
+    it("Can't pass wrong stake arrays", async function () {
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken
         .connect(opolisMember2)
@@ -263,8 +261,8 @@ describe("payroll works", function () {
         .connect(opolisMember2)
         .memberStake(testToken.address, payrollAmt2, payrollID2);
       await expect(
-        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt2])
-      ).to.be.revertedWith("InvalidStake()");
+        payroll.withdrawStakes([payrollID1], [1,3,4], [testToken.address], [payrollAmt2])
+      ).to.be.revertedWith("InvalidWithdraw()");
     });
 
     it("Can withdraw one payroll", async function () {
@@ -389,15 +387,16 @@ describe("payroll works", function () {
 
       const withdrawTx = await payroll.withdrawStakes(
         [payrollID1, payrollID2],
+        [1,1],
         [testToken.address, testToken.address],
         [payrollAmt1, payrollAmt2]
       );
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(testToken.address, payrollID1, payrollAmt1);
+        .withArgs(testToken.address, payrollID1, 1, payrollAmt1);
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(testToken.address, payrollID2, payrollAmt2);
+        .withArgs(testToken.address, payrollID2, 1, payrollAmt2);
     });
 
     it("Cannot withdraw a stake thats already withdrawn", async function () {
@@ -412,12 +411,14 @@ describe("payroll works", function () {
       const startBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawStakes(
         [payrollID1],
+        [1],
         [testToken.address],
         [payrollAmt1]
       );
       const midBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawStakes(
         [payrollID1],
+        [1],
         [testToken.address],
         [payrollAmt1]
       );
@@ -442,6 +443,7 @@ describe("payroll works", function () {
         .approve(payroll.address, payrollAmt2);
 
       let ids = [];
+      let nums = [];
       let tokens = [];
       let amounts = [];
       for (let i = 1; i < 150; i++) {
