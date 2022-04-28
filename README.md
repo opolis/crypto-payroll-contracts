@@ -18,7 +18,9 @@ Mainnet: [0x87C91ac511688138E1452C942663f52cD5E2AbC5](https://etherscan.io/addre
 
 Ropsten: [0x51E9210d7Ee7a8e7064C8a71F0cb0baA2205F298](https://ropsten.etherscan.io/address/0x77c7678911647eD74A9997C5412A4DAE2d6BEE77)
 
-Mumbai: [0x347434c2BbBa4193bd56184bD768f4a4139Da39c](https://mumbai.polygonscan.com/address/0x347434c2BbBa4193bd56184bD768f4a4139Da39c)
+Mumbai: [0xbA77cd256d0F650ECe87BF4CC25C425C0332F5e9](https://mumbai.polygonscan.com/address/0xbA77cd256d0F650ECe87BF4CC25C425C0332F5e9)
+
+** Mumbai Test Token: 0x0c6438F3f9c0aa126ef88C9A0371cFb73904Bf01
 
 ## Core Functions 
 
