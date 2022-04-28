@@ -57,12 +57,12 @@ module.exports = {
 			gasPrice: 150000000000,
 		},
   },
-  gasReporter: {
-    currency: 'USD',
-    gasPrice: 100,
-    excludeContracts: ['contracts/test'],
-    coinmarketcap: config.coinmarketcap
-  },
+   gasReporter: {
+     currency: 'USD',
+     gasPrice: 100,
+     excludeContracts: ['contracts/test'],
+     coinmarketcap: config.coinmarketcap
+   },
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/

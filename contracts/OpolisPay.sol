@@ -19,9 +19,6 @@ error InvalidPayroll();
 /// @dev payroll id used
 error DuplicatePayroll();
 
-/// @dev already staked
-error DuplicateStake();
-
 /// @dev amount equals zero
 error InvalidAmount();
 
@@ -31,6 +28,10 @@ error NotMember();
 /// @dev stake must be a non zero amount of whitelisted token
 /// or non zero amount of eth
 error InvalidStake();
+
+/// @dev stake must be a non zero amount of whitelisted token
+/// or non zero amount of eth
+error InvalidWithdraw();
 
 /// @dev setting one of the role to zero address
 error ZeroAddress();
@@ -58,23 +59,23 @@ contract OpolisPay is ReentrancyGuard {
     address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
     address payable private destination; // Where funds are liquidated 
-    address private opolisHelper; //Can be bot wallet for convenience 
+    address private opolisHelper; //Can be bot wallet for convenience
     
     event SetupComplete(address indexed destination, address indexed admin, address indexed helper, address[] tokens);
-    event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId);
+    event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId, uint256 stakeNumber);
     event Paid(address indexed payor, address indexed token, uint256 indexed payrollId, uint256 amount); 
     event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
-    event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 amount);
+    event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 stakeNumber, uint256 amount);
     event Sweep(address indexed token, uint256 amount);
     event NewDestination(address indexed oldDestination, address indexed destination);
     event NewAdmin(address indexed oldAdmin, address indexed opolisAdmin);
     event NewHelper(address indexed oldHelper, address indexed newHelper);
     event NewTokens(address[] newTokens);
     
-    mapping (uint256 => bool) private stakes; //Tracks used stake ids
+    mapping (uint256 => uint256) private stakes; //Tracks used stake ids
     mapping (uint256 => bool) private payrollIds; //Tracks used payroll ids
     mapping (uint256 => bool) public payrollWithdrawn; //Tracks payroll withdrawals
-    mapping (uint256 => bool) public stakeWithdrawn; //Tracks stake withdrawals
+    mapping (uint256 => uint256) public stakeWithdrawn; //Tracks stake withdrawals
     mapping (address => bool) public whitelisted; //Tracks whitelisted tokens
     
     modifier onlyAdmin {
@@ -145,19 +146,21 @@ contract OpolisPay is ReentrancyGuard {
             )
         ) revert InvalidStake();
         if (memberId == 0) revert NotMember();
-        if (stakes[memberId]) revert DuplicateStake();
+
+        // @dev increments the stake id for each member
+        uint stakeCount = ++stakes[memberId]; 
         
         // @dev function for auto transfering out stakes 
 
         if (msg.value > 0 && token == ETH){
             (bool success, ) = destination.call{value: msg.value}("");
             require(success, "Transfer failed.");
-            emit Staked(msg.sender, ETH, msg.value, memberId);
+            emit Staked(msg.sender, ETH, msg.value, memberId, stakes[memberId]);
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-            emit Staked(msg.sender, token, amount, memberId);
+            emit Staked(msg.sender, token, amount, memberId, stakeCount);
         }
-        stakes[memberId] = true;
+        
     }
 
     /// @notice withdraw function for admin or OpsBot to call   
@@ -165,7 +168,6 @@ contract OpolisPay is ReentrancyGuard {
     /// @param _payrollTokens the tokens the payrolls were paid in
     /// @param _payrollAmounts the amount that was paid
     /// @dev we iterate through payrolls and clear them out with the funds being sent to the destination address
-    
     function withdrawPayrolls(
         uint256[] calldata _payrollIds,
         address[] calldata _payrollTokens,
@@ -181,7 +183,7 @@ contract OpolisPay is ReentrancyGuard {
             
             if (!payrollWithdrawn[id]) {
                 uint256 j;
-                for (j; j < supportedTokens.length; j++) {
+                for (; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
@@ -203,35 +205,39 @@ contract OpolisPay is ReentrancyGuard {
     }
 
     /// @notice withdraw function for admin or OpsBot to call   
-    /// @param _stakeIds the paid stakes we want to clear out 
+    /// @param _stakeIds the paid stakes id we want to clear out 
+    /// @param _stakeNum the particular stake number associated with that id
     /// @param _stakeTokens the tokens the stakes were paid in
     /// @param _stakeAmounts the amount that was paid
     /// @dev we iterate through stakes and clear them out with the funds being sent to the destination address
     function withdrawStakes(
         uint256[] calldata _stakeIds,
+        uint256[] calldata _stakeNum, 
         address[] calldata _stakeTokens,
         uint256[] calldata _stakeAmounts
     ) external onlyOpolis {
         uint256[] memory withdrawAmounts = new uint256[](supportedTokens.length);
-        for (uint256 i = 0; i < _stakeIds.length; i++){
-            uint256 id = _stakeIds[i];
-            if (!stakes[id]) revert InvalidStake();
+        if(_stakeIds.length != _stakeNum.length) revert InvalidWithdraw();
 
+        for (uint256 i = 0; i < _stakeIds.length; i++){
+
+            uint256 id = _stakeIds[i];
             address token = _stakeTokens[i];
             uint256 amount = _stakeAmounts[i];
+            uint256 num = _stakeNum[i];
             
-            if (!stakeWithdrawn[id]) {
+            if (stakeWithdrawn[id] < num) {
                 uint256 j;
-                for (j; j < supportedTokens.length; j++) {
+                for (; j < supportedTokens.length; j++) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
                     }
                 }
                 if (j == supportedTokens.length) revert InvalidToken();
-                stakeWithdrawn[id] = true;
+                stakeWithdrawn[id] = num;
                 
-                emit OpsStakeWithdraw(token, id, amount);
+                emit OpsStakeWithdraw(token, id, num, amount);
             }
         }
 

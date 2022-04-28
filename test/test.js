@@ -22,6 +22,9 @@ describe("payroll works", function () {
   const payrollAmt1 = ethers.utils.parseUnits("2500", 18);
   const payrollAmt2 = ethers.utils.parseUnits("3000", 18);
 
+  const stakeApproval = ethers.utils.parseUnits("100000", 18);
+
+
   let setupTx;
 
   beforeEach(async () => {
@@ -118,21 +121,28 @@ describe("payroll works", function () {
 
   describe("stake", () => {
     beforeEach(async () => {
-      await testToken.mint(opolisMember1.address, payrollAmt1);
+      await testToken.mint(opolisMember1.address, stakeApproval);
       await testToken
         .connect(opolisMember1)
-        .approve(payroll.address, payrollAmt1);
+        .approve(payroll.address, stakeApproval);
     });
 
-    it("Only one stake per user", async function () {
+    it("Let's a member stake multiple times", async function () {
       await payroll
         .connect(opolisMember1)
         .memberStake(testToken.address, payrollAmt1, payrollID1);
       await expect(
         payroll
           .connect(opolisMember1)
-          .memberStake(testToken.address, payrollAmt1, payrollID1)
-      ).to.be.revertedWith("DuplicateStake()");
+          .memberStake(testToken.address, payrollAmt2, payrollID1)
+      ).to.emit(payroll, "Staked")
+      .withArgs(
+        opolisMember1.address,
+        testToken.address,
+        payrollAmt2,
+        payrollID1,
+        2
+      );
     });
 
     it("Let's you stake with correct inputs", async function () {
@@ -145,7 +155,8 @@ describe("payroll works", function () {
           opolisMember1.address,
           testToken.address,
           payrollAmt1,
-          payrollID1
+          payrollID1,
+          1
         );
     });
 
@@ -163,7 +174,7 @@ describe("payroll works", function () {
         });
       expect(stake)
         .to.emit(payroll, "Staked")
-        .withArgs(opolisMember1.address, ethAddress, ethers.utils.parseEther("1.0").toString(), payrollID1);
+        .withArgs(opolisMember1.address, ethAddress, ethers.utils.parseEther("1.0").toString(), payrollID1, 1);
 
       const ethBalance = await provider.getBalance(opolisDest);
       expect(ethBalance.eq(ethers.utils.parseEther("1.0"))).to.be.true;
@@ -224,6 +235,7 @@ describe("payroll works", function () {
       await expect(
         payroll.withdrawStakes(
           [payrollID2],
+          [1],
           [testToken2.address],
           [payrollAmt2]
         )
@@ -238,12 +250,9 @@ describe("payroll works", function () {
           [payrollAmt1]
         )
       ).to.be.revertedWith("InvalidPayroll()");
-      await expect(
-        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt1])
-      ).to.be.revertedWith("InvalidStake()");
     });
 
-    it("Can't withdraw non existant stake", async function () {
+    it("Can't pass wrong stake arrays", async function () {
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken
         .connect(opolisMember2)
@@ -252,8 +261,8 @@ describe("payroll works", function () {
         .connect(opolisMember2)
         .memberStake(testToken.address, payrollAmt2, payrollID2);
       await expect(
-        payroll.withdrawStakes([payrollID1], [testToken.address], [payrollAmt2])
-      ).to.be.revertedWith("InvalidStake()");
+        payroll.withdrawStakes([payrollID1], [1,3,4], [testToken.address], [payrollAmt2])
+      ).to.be.revertedWith("InvalidWithdraw()");
     });
 
     it("Can withdraw one payroll", async function () {
@@ -378,15 +387,16 @@ describe("payroll works", function () {
 
       const withdrawTx = await payroll.withdrawStakes(
         [payrollID1, payrollID2],
+        [1,1],
         [testToken.address, testToken.address],
         [payrollAmt1, payrollAmt2]
       );
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(testToken.address, payrollID1, payrollAmt1);
+        .withArgs(testToken.address, payrollID1, 1, payrollAmt1);
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(testToken.address, payrollID2, payrollAmt2);
+        .withArgs(testToken.address, payrollID2, 1, payrollAmt2);
     });
 
     it("Cannot withdraw a stake thats already withdrawn", async function () {
@@ -401,12 +411,14 @@ describe("payroll works", function () {
       const startBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawStakes(
         [payrollID1],
+        [1],
         [testToken.address],
         [payrollAmt1]
       );
       const midBalance = await testToken.balanceOf(payroll.address);
       await payroll.withdrawStakes(
         [payrollID1],
+        [1],
         [testToken.address],
         [payrollAmt1]
       );
@@ -431,6 +443,7 @@ describe("payroll works", function () {
         .approve(payroll.address, payrollAmt2);
 
       let ids = [];
+      let nums = [];
       let tokens = [];
       let amounts = [];
       for (let i = 1; i < 150; i++) {
@@ -439,6 +452,7 @@ describe("payroll works", function () {
           .memberStake(testToken.address, "1", i);
 
         ids = [...ids, i];
+        nums = [...nums, 1]
         tokens = [...tokens, testToken.address];
         amounts = [...amounts, "1"];
       }
@@ -448,23 +462,25 @@ describe("payroll works", function () {
           .memberStake(testToken2.address, "1", i);
 
         ids = [...ids, i];
+        nums = [...nums, 1]
         tokens = [...tokens, testToken2.address];
         amounts = [...amounts, "1"];
       }
-      for (let i = 300; i < 500; i++) {
+      for (let i = 300; i < 450; i++) {
         await payroll
           .connect(opolisMember2)
           .memberStake(testToken3.address, "1", i);
 
         ids = [...ids, i];
+        nums = [...nums, 1]
         tokens = [...tokens, testToken3.address];
         amounts = [...amounts, "1"];
       }
 
-      const withdrawTx = await payroll.withdrawStakes(ids, tokens, amounts);
+      const withdrawTx = await payroll.withdrawStakes(ids, nums, tokens, amounts);
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
-        .withArgs(testToken.address, 1, "1");
+        .withArgs(testToken.address, 1, 1, "1");
     });
 
     it("Can clear balance if admin'", async function () {

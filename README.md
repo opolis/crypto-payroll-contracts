@@ -3,6 +3,15 @@ Simple way for tracking crypto payroll payments for Opolis crypto payroll. This 
 
 The idea is verify when a payroll has been paid based on the user paying their payroll via our UI, where we'll programmatically submit the payrollId along with the actual payment. The other goal is to give our operations team a way to ensure 1) new member deposit in crypto are either immediately sent to Wyre, if paid in ETH, or 2) withdraw batches of new member stakes and crypto payrolls at their discretion. 
 
+## Deploying: 
+Steps for getting up and running: 
+
+1. Pull repo from github
+2. `yarn install`
+3. Create a `./config.json` and fill in using the example file 
+4. Run `yarn test` to run test coverage 
+5. Launch with `npx hardhat run ./scripts/deploy-tests.js` for tests or `npx hardhat run ./scripts/deploy.js --network {{network}}`
+
 ## Deployments:
 
 Mainnet: [0x87C91ac511688138E1452C942663f52cD5E2AbC5](https://etherscan.io/address/0x87C91ac511688138E1452C942663f52cD5E2AbC5)
