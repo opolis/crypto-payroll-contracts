@@ -30,9 +30,15 @@ module.exports = {
       }
     }
   },
-  defaultNetwork: "ropsten",
+  defaultNetwork: "mainnet",
   networks: {
     hardhat: {},
+    mainnet: {
+			url: `https://mainnet.infura.io/v3/${config.infura}`,
+			accounts: [config.privateKey],
+			gas: 3200000,
+			gasPrice: 150000000000,
+		},
 		ropsten: {
 			url: `https://ropsten.infura.io/v3/${config.infura}`,
 			accounts: [config.privateKey],
@@ -42,27 +48,23 @@ module.exports = {
 			accounts: [config.privateKey],
 		},
     polygon: {
-      url: "https://rpc-mainnet.maticvigil.com",
+      url: `https://polygon-mainnet.infura.io/v3/${config.infura}`,
       accounts: [config.privateKey],
-      gasPrice: 8000000000,
+      gas: 3200000,
+			gasPrice: 150000000000,
     },
     xdai: {
 			url: `https://rpc.xdaichain.com`,
 			accounts: [config.privateKey],
 		},
-		mainnet: {
-			url: `https://mainnet.infura.io/v3/${config.infura}`,
-			accounts: [config.privateKey],
-			gas: 3200000,
-			gasPrice: 150000000000,
-		},
+
   },
-   gasReporter: {
-     currency: 'USD',
-     gasPrice: 100,
-     excludeContracts: ['contracts/test'],
-     coinmarketcap: config.coinmarketcap
-   },
+    // gasReporter: {
+    //   currency: 'USD',
+    //   gasPrice: 100,
+    //   excludeContracts: ['contracts/test'],
+    //   coinmarketcap: config.coinmarketcap
+    // },
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
