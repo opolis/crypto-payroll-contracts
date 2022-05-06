@@ -68,7 +68,9 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: config.etherscan // config.polyscan for polygon/mumbai
+    apiKey: {
+      polygon: '' // config.polyscan for polygon/mumbai
+    }
   },
   abiExporter: {
     path: './abi',

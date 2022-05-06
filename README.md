@@ -20,7 +20,7 @@ Mainnetv2 [0xaE7db356c82401B111134041533AB490906C8ED5](https://etherscan.io/addr
 
 Ropsten: [0x51E9210d7Ee7a8e7064C8a71F0cb0baA2205F298](https://ropsten.etherscan.io/address/0x77c7678911647eD74A9997C5412A4DAE2d6BEE77)
 
-Polygon: [0xb5629786Ac714a1956a20Fddfe5f152B2cfC6972] (https://polygonscan.com/address/0xb5629786Ac714a1956a20Fddfe5f152B2cfC6972) (only for testing)
+Polygon: [0x11d33195F1542298Ae5e3DE8395477A21B3196fe] (https://polygonscan.com/address/0x11d33195F1542298Ae5e3DE8395477A21B3196fe) (only for testing)
 
 Mumbai: [0xbA77cd256d0F650ECe87BF4CC25C425C0332F5e9](https://mumbai.polygonscan.com/address/0xbA77cd256d0F650ECe87BF4CC25C425C0332F5e9)
 
