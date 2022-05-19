@@ -26,6 +26,10 @@ Mumbai: [0xbA77cd256d0F650ECe87BF4CC25C425C0332F5e9](https://mumbai.polygonscan.
 
 ** Mumbai Test Token: 0x0c6438F3f9c0aa126ef88C9A0371cFb73904Bf01
 
+Harmony [0xA6E644c1bBb0Dbb48Db66489FfC1Bc7538cF6B18] (https://explorer.harmony.one/address/0xA6E644c1bBb0Dbb48Db66489FfC1Bc7538cF6B18#code)
+
+
+
 ## Core Functions 
 
 payParoll() - Function to allow a transfer of whitelisted ERC20 tokens along with the corresponding payrollID for that members' payroll. We just use payrollID rather than other information to make it harder to associate a payroll with any particular member. 

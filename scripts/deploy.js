@@ -13,7 +13,7 @@ async function main() {
       config.wyreAddress, 
       config.opolisAdmin, 
       config.opolisHelper,
-      [config.usdcAddress]);
+      [config.usdcAddress, config.daiAddress, config.usdtAddress]);
 
   await payroll.deployed();
 

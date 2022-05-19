@@ -30,7 +30,7 @@ module.exports = {
       }
     }
   },
-  defaultNetwork: "mainnet",
+  defaultNetwork: "harmony",
   networks: {
     hardhat: {},
     mainnet: {
@@ -39,6 +39,10 @@ module.exports = {
 			gas: 3200000,
 			gasPrice: 150000000000,
 		},
+    harmony: {
+      url: `https://api.harmony.one`, 
+      accounts: [config.privateKey],
+    },
 		ropsten: {
 			url: `https://ropsten.infura.io/v3/${config.infura}`,
 			accounts: [config.privateKey],
@@ -69,7 +73,9 @@ module.exports = {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey: {
-      polygon: '' // config.polyscan for polygon/mumbai
+      mainnet: config.etherscan, 
+      polygon: config.polyscan, 
+      harmony: "key" 
     }
   },
   abiExporter: {
@@ -79,4 +85,4 @@ module.exports = {
     runOnCompile: true,
     // only: [],
   },
-};;
+};
