@@ -4,6 +4,7 @@ pragma solidity 0.8.5;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "/interfaces.ISwap.sol";
 
 /// @notice custom errors for revert statements
 
@@ -55,11 +56,16 @@ contract OpolisPay is ReentrancyGuard {
 
     address internal constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address internal constant ZERO = address(0);
+    address public constant WETH; 
+
+    address public ROUTER; 
+    address public stableToken;
 
     address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
     address payable private destination; // Where funds are liquidated 
     address private opolisHelper; //Can be bot wallet for convenience
+    bool public offRamp; // Whether network has a native off-ramp
     
     event SetupComplete(address indexed destination, address indexed admin, address indexed helper, address[] tokens);
     event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId, uint256 stakeNumber);
@@ -67,9 +73,10 @@ contract OpolisPay is ReentrancyGuard {
     event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
     event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 stakeNumber, uint256 amount);
     event Sweep(address indexed token, uint256 amount);
-    event NewDestination(address indexed oldDestination, address indexed destination);
+    event NewDestination(address indexed oldDestination, address indexed destination, bool offRamp);
     event NewAdmin(address indexed oldAdmin, address indexed opolisAdmin);
     event NewHelper(address indexed oldHelper, address indexed newHelper);
+    event NewRouter(address indexed oldRouter, address indexed newRouter);
     event NewTokens(address[] newTokens);
     
     mapping (uint256 => uint256) private stakes; //Tracks used stake ids
@@ -87,6 +94,11 @@ contract OpolisPay is ReentrancyGuard {
         if (!(msg.sender == opolisAdmin || msg.sender == opolisHelper)) revert NotPermitted();
         _;
     }
+
+    modifier ensure(uint deadline) {
+        require(deadline >= block.timestamp, 'TIME EXPIRED');
+        _;
+    }
     
     /// @notice launches contract with a destination as the Opolis wallet, the admins, and a token whitelist
     /// @param _destination the address where payroll and stakes will be sent when withdrawn 
@@ -98,11 +110,17 @@ contract OpolisPay is ReentrancyGuard {
         address payable _destination,
         address _opolisAdmin,
         address _opolisHelper,
-        address[] memory _tokenList
+        address _router, 
+        address _WETH,
+        address[] memory _tokenList,
+        bool _offRamp
     ) {
         destination = _destination; 
         opolisAdmin = _opolisAdmin;
         opolisHelper = _opolisHelper;
+        ROUTER = _router;
+        WETH = _WETH; 
+        offRamp = _offRamp;
         
         for (uint256 i = 0; i < _tokenList.length; i++) {
             _addToken(_tokenList[i]);
@@ -282,12 +300,13 @@ contract OpolisPay is ReentrancyGuard {
     /// @param newDestination is the new address where funds are sent (assumes it's payable exchange address)
     /// @dev must be called by Opolis Admin multi-sig
     
-    function updateDestination(address payable newDestination) external onlyAdmin returns (address){
+    function updateDestination(address payable newDestination, bool _offRamp) external onlyAdmin returns (address){
         
         if (newDestination == ZERO) revert ZeroAddress();
 
-        emit NewDestination(destination, newDestination);
+        emit NewDestination(destination, newDestination, _offRamp);
         destination = newDestination;
+        offRamp = _offRamp;
         
         return destination;
     }
@@ -334,6 +353,21 @@ contract OpolisPay is ReentrancyGuard {
         
          emit NewTokens(newTokens);  
     }
+
+        /// @notice this function is used to add new whitelisted tokens
+    /// @param newTokens are the tokens to be whitelisted
+    /// @dev restricted to admin b/c this is a business / compliance decision 
+    
+    function updateRouter(address newRouter) external onlyAdmin returns (address) {
+        
+        if (newRouter == ZERO) revert ZeroAddress();
+        
+        emit NewRouter(router, newRouter ); 
+        ROUTER = newRouter;
+      
+        return ROUTER;
+    }
+
     
     /********************************************************************************
                              INTERNAL FUNCTIONS 
@@ -349,6 +383,35 @@ contract OpolisPay is ReentrancyGuard {
 
     function _withdraw(address token, uint256 amount) internal {
         IERC20(token).safeTransfer(destination, amount);
+    }
+
+    function _swap(address tokenIn, uint256 amountIn, uint256 amountOut) internal payable {
+        
+        IERC20(tokenIn).approve(ROUTER, amountIn);
+        
+        if(tokenIn == ETH && msg.value != 0) {
+            path = new address[](2);
+            path[0] = WETH;
+            path[1] = stableToken;
+
+            ISwap(ROUTER).swapETHForExactTokens(
+                amountOut,
+                path,
+                address(this),
+                block.timestamp
+            );
+        } else {
+            path = new address[](2);
+            path[0] = tokenIn;
+            path[1] = stableToken;
+
+            ISwap(ROUTER).swapETHForExactTokens(
+                amountOut,
+                path,
+                address(this),
+                block.timestamp
+            );
+        }  
     }
     
 }
