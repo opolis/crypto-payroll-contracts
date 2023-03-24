@@ -30,7 +30,7 @@ module.exports = {
       }
     }
   },
-  defaultNetwork: "harmony",
+  defaultNetwork: "auroraTest",
   networks: {
     hardhat: {},
     mainnet: {
@@ -41,6 +41,14 @@ module.exports = {
 		},
     harmony: {
       url: `https://api.harmony.one`, 
+      accounts: [config.privateKey],
+    },
+    auroraTest: {
+      url: `https://testnet.aurora.dev`,
+      accounts: [config.privateKey],
+    },
+    aurora: {
+      url: `https://mainnet.aurora.dev`,
       accounts: [config.privateKey],
     },
 		ropsten: {
@@ -75,7 +83,8 @@ module.exports = {
     apiKey: {
       mainnet: config.etherscan, 
       polygon: config.polyscan, 
-      harmony: "key" 
+      harmony: "key",
+      aurora: 
     }
   },
   abiExporter: {
