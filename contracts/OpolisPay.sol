@@ -59,8 +59,9 @@ contract OpolisPay is ReentrancyGuard {
     address[] public supportedTokens; //Tokens that can be sent. 
     address private opolisAdmin; //Should be Opolis multi-sig for security
     address private opolisHelper; //Can be bot wallet for convenience
+    address private ethLiquidation; //Address for ETH liquidations
  
-    event SetupComplete(address indexed destination, address indexed admin, address indexed helper, address[] tokens);
+    event SetupComplete(address[] destination, address indexed admin, address indexed helper, address[] tokens);
     event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId, uint256 stakeNumber);
     event Paid(address indexed payor, address indexed token, uint256 indexed payrollId, uint256 amount); 
     event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
@@ -91,18 +92,22 @@ contract OpolisPay is ReentrancyGuard {
     /// @notice launches contract with a destination as the Opolis wallet, the admins, and a token whitelist
     /// @param _destinationList the addresses where payroll and stakes will be sent when withdrawn based on token
     /// @param _opolisAdmin the multi-sig which is the ultimate admin 
+    /// @param _ethLiq the address where we send eth or native token liquidations 
     /// @param _opolisHelper meant to allow for a bot to handle less sensitive items 
     /// @param _tokenList initial whitelist of tokens for staking and payroll 
     
     constructor (
         address _opolisAdmin,
         address _opolisHelper,
+        address _ethLiq,
         address[] memory _tokenList, 
         address[] memory  _destinationList
     ) {
         require(_tokenList.length == _destinationList.length, "missing destination");
         opolisAdmin = _opolisAdmin;
         opolisHelper = _opolisHelper;
+        ethLiquidation = _ethLiq; 
+        
         
         for (uint256 i = 0; i < _tokenList.length; i++) {
             _addToken(_tokenList[i]);
@@ -110,7 +115,7 @@ contract OpolisPay is ReentrancyGuard {
         }
 
         
-        emit SetupComplete(destination, opolisAdmin, opolisHelper, _tokenList);
+        emit SetupComplete(_destinationList, opolisAdmin, opolisHelper, _tokenList);
 
     }
     
@@ -155,7 +160,7 @@ contract OpolisPay is ReentrancyGuard {
         // @dev function for auto transfering out stakes 
 
         if (msg.value > 0 && token == ETH){
-            (bool success, ) = destination.call{value: msg.value}("");
+            (bool success, ) = ethLiquidation.call{value: msg.value}("");
             require(success, "Transfer failed.");
             emit Staked(msg.sender, ETH, msg.value, memberId, stakes[memberId]);
         } else {
@@ -281,6 +286,7 @@ contract OpolisPay is ReentrancyGuard {
      *******************************************************************************/
 
     /// @notice this function is used to adjust where member funds are sent by contract
+    /// @param token since each token has a new destination 
     /// @param newDestination is the new address where funds are sent (assumes it's payable exchange address)
     /// @dev must be called by Opolis Admin multi-sig
     
@@ -322,6 +328,7 @@ contract OpolisPay is ReentrancyGuard {
     
     /// @notice this function is used to add new whitelisted tokens
     /// @param newTokens are the tokens to be whitelisted
+    /// @param newDestination since each new token may have a different destination 
     /// @dev restricted to admin b/c this is a business / compliance decision 
     
     function addTokens(address[] memory newTokens, address[] memory newDestinations) external onlyAdmin {
