@@ -2,7 +2,9 @@ const { expect } = require("chai");
 const { ethers, waffle } = require("hardhat");
 
 const provider = waffle.provider;
-const opolisDest = "0x7136fbDdD4DFfa2369A9283B6E90A040318011Ca";
+const opolisEthLiq = "0x7136fbDdD4DFfa2369A9283B6E90A040318011Ca";
+const testTokenLiq = "0x7136fbDdD4DFfa2369A9283B6E90A040318011Ca";
+const testToken2Liq = "0x3792acDf2A8658FBaDe0ea70C47b89cB7777A5a5";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 const ethAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const nonWhitelistedToken = (newAddress =
@@ -10,6 +12,8 @@ const nonWhitelistedToken = (newAddress =
 
 describe("payroll works", function () {
   let testToken;
+  let testToken2;
+  let testToken3;
   let payroll;
   let opolisAdmin;
   let opolisHelper;
@@ -43,10 +47,11 @@ describe("payroll works", function () {
     await testToken3.deployed();
 
     payroll = await OpolisPay.deploy(
-      opolisDest,
       opolisAdmin.address,
       opolisHelper.address,
-      [testToken.address]
+      opolisEthLiq.address,
+      [testToken.address, testToken2.address],
+      [testTokenLiq.address, testToken2Liq.address]
     );
     await payroll.deployed();
   });
@@ -55,9 +60,10 @@ describe("payroll works", function () {
     it("Setup should be done correctly", async function () {
       expect(payroll.deployTransaction)
         .to.emit(payroll, "SetupComplete")
-        .withArgs(opolisDest, opolisAdmin.address, opolisHelper.address, [
-          testToken.address,
-        ]);
+        .withArgs(opolisAdmin.address, opolisHelper.address, opolisEthLiq.address,
+          [testToken.address, testToken2.address],
+          [testTokenLiq.address, testToken2Liq.address]
+        );
     });
 
     it("Can't send eth directly to contract", async () => {
@@ -219,7 +225,7 @@ describe("payroll works", function () {
       await expect(
         payroll.withdrawPayrolls(
           [payrollID1],
-          [testToken2.address],
+          [testToken3.address],
           [payrollAmt1]
         )
       ).to.be.revertedWith("InvalidToken()");
@@ -236,7 +242,7 @@ describe("payroll works", function () {
         payroll.withdrawStakes(
           [payrollID2],
           [1],
-          [testToken2.address],
+          [testToken3.address],
           [payrollAmt2]
         )
       ).to.be.revertedWith("InvalidToken()");
@@ -298,8 +304,10 @@ describe("payroll works", function () {
         .withArgs(testToken.address, payrollID2, payrollAmt2);
     });
 
+
+    
     it("withdraw lots of payrolls with multiple tokens at the same time", async function () {
-      await payroll.addTokens([testToken2.address, testToken3.address]);
+      await payroll.addTokens([testToken3.address], [testToken3Liq.address]);
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken2.mint(opolisMember2.address, payrollAmt2);
       await testToken3.mint(opolisMember2.address, payrollAmt2);
@@ -428,7 +436,7 @@ describe("payroll works", function () {
     });
 
     it("withdraw lots of stakes with multiple tokens at the same time", async function () {
-      await payroll.addTokens([testToken2.address, testToken3.address]);
+      await payroll.addTokens([testToken3.address], [testToken3Liq.address]);
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken2.mint(opolisMember2.address, payrollAmt2);
       await testToken3.mint(opolisMember2.address, payrollAmt2);
@@ -532,7 +540,7 @@ describe("payroll works", function () {
     });
 
     it("update destination", async () => {
-      const tx = await payroll.updateDestination(newAddress);
+      const tx = await payroll.updateDestination(testToken.address, newAddress);
       expect(tx)
         .to.emit(payroll, "NewDestination")
         .withArgs(opolisDest, newAddress);
@@ -558,7 +566,12 @@ describe("payroll works", function () {
         "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0",
         "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
       ];
-      const tx = await payroll.addTokens(tokens);
+      const liqAddr = [
+        "0x49E1484B74a82ed662B8C58De36E361Cd396349f",
+        "0x525EEcB2865a1F8d2F28699D093eF76c32b53bD5",
+        "0x235974727FE00dCA394E581D28579f8Af59464a5"
+      ]
+      const tx = await payroll.addTokens(tokens, liqAddr);
       expect(tx).to.emit(payroll, "NewTokens").withArgs(tokens);
     });
   });

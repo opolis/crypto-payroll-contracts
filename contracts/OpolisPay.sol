@@ -61,7 +61,7 @@ contract OpolisPay is ReentrancyGuard {
     address private opolisHelper; //Can be bot wallet for convenience
     address private ethLiquidation; //Address for ETH liquidations
  
-    event SetupComplete(address[] destination, address indexed admin, address indexed helper, address[] tokens);
+    event SetupComplete(address indexed admin, address indexed helper, address ethLiquidation, address[] tokens, address[] liqDestinations);
     event Staked(address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId, uint256 stakeNumber);
     event Paid(address indexed payor, address indexed token, uint256 indexed payrollId, uint256 amount); 
     event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
@@ -115,7 +115,7 @@ contract OpolisPay is ReentrancyGuard {
         }
 
         
-        emit SetupComplete(_destinationList, opolisAdmin, opolisHelper, _tokenList);
+        emit SetupComplete(opolisAdmin, opolisHelper, _ethLiq, _tokenList, _destinationList);
 
     }
     

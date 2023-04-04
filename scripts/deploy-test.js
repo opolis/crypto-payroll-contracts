@@ -16,13 +16,21 @@ async function main() {
     await TT.deployed();
     console.log("Test token deployed to:", TT.address);
 
+    console.log("Deploying test token...");
+    const TestToken2 = await ethers.getContractFactory("TestToken2");
+    const TT2 = await TestToken2.deploy();
+
+    await TT2.deployed();
+    console.log("Test token 2 deployed to:", TT2.address);
+
     console.log("Deploying test payroll contract...");
     const OpolisPayroll = await ethers.getContractFactory("OpolisPay");
     const payroll = await OpolisPayroll.deploy(
-      config.wyreAddress, 
       config.opolisAdmin, 
       config.opolisHelper,
-      [TT.address]);
+      config.ethLiq,
+      [TT.address, TT2.address],
+      [config.Token1Liq, config.Token2Liq]);
 
     await payroll.deployed();
     console.log("Opolis Pay deployed to:", payroll.address);
