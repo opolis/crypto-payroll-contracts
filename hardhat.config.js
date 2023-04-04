@@ -1,7 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("hardhat-gas-reporter");
 require("@nomiclabs/hardhat-etherscan");
-require('hardhat-abi-exporter');
+require("hardhat-abi-exporter");
 
 const config = require("./config.json");
 
@@ -26,21 +26,21 @@ module.exports = {
     version: "0.8.5",
     settings: {
       optimizer: {
-        enabled: true
-      }
-    }
+        enabled: true,
+      },
+    },
   },
   defaultNetwork: "auroraTest",
   networks: {
     hardhat: {},
     mainnet: {
-			url: `https://mainnet.infura.io/v3/${config.infura}`,
-			accounts: [config.privateKey],
-			gas: 3200000,
-			gasPrice: 150000000000,
-		},
+      url: `https://mainnet.infura.io/v3/${config.infura}`,
+      accounts: [config.privateKey],
+      gas: 3200000,
+      gasPrice: 150000000000,
+    },
     harmony: {
-      url: `https://api.harmony.one`, 
+      url: `https://api.harmony.one`,
       accounts: [config.privateKey],
     },
     auroraTest: {
@@ -51,44 +51,43 @@ module.exports = {
       url: `https://mainnet.aurora.dev`,
       accounts: [config.privateKey],
     },
-		ropsten: {
-			url: `https://ropsten.infura.io/v3/${config.infura}`,
-			accounts: [config.privateKey],
-		},
+    ropsten: {
+      url: `https://ropsten.infura.io/v3/${config.infura}`,
+      accounts: [config.privateKey],
+    },
     mumbai: {
-			url: `https://matic-mumbai.chainstacklabs.com`,
-			accounts: [config.privateKey],
-		},
+      url: `https://matic-mumbai.chainstacklabs.com`,
+      accounts: [config.privateKey],
+    },
     polygon: {
       url: `https://polygon-mainnet.infura.io/v3/${config.infura}`,
       accounts: [config.privateKey],
       gas: 3200000,
-			gasPrice: 150000000000,
+      gasPrice: 150000000000,
     },
     xdai: {
-			url: `https://rpc.xdaichain.com`,
-			accounts: [config.privateKey],
-		},
-
+      url: `https://rpc.xdaichain.com`,
+      accounts: [config.privateKey],
+    },
   },
-    // gasReporter: {
-    //   currency: 'USD',
-    //   gasPrice: 100,
-    //   excludeContracts: ['contracts/test'],
-    //   coinmarketcap: config.coinmarketcap
-    // },
+  // gasReporter: {
+  //   currency: 'USD',
+  //   gasPrice: 100,
+  //   excludeContracts: ['contracts/test'],
+  //   coinmarketcap: config.coinmarketcap
+  // },
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
     apiKey: {
-      mainnet: config.etherscan, 
-      polygon: config.polyscan, 
+      mainnet: config.etherscan,
+      polygon: config.polyscan,
       harmony: "key",
-      aurora: 
-    }
+      aurora: "key",
+    },
   },
   abiExporter: {
-    path: './abi',
+    path: "./abi",
     clear: true,
     flat: true,
     runOnCompile: true,

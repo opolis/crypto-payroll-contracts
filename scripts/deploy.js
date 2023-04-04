@@ -10,10 +10,12 @@ const config = require("../config.json");
 async function main() {
   const OpolisPayroll = await ethers.getContractFactory("OpolisPay");
   const payroll = await OpolisPayroll.deploy(
-      config.wyreAddress, 
-      config.opolisAdmin, 
-      config.opolisHelper,
-      [config.usdcAddress, config.daiAddress, config.usdtAddress]);
+    config.opolisAdmin,
+    config.opolisHelper,
+    config.ethLiq,
+    [config.usdcAddress, config.daiAddress, config.usdtAddress],
+    [config.usdcLiq, config.daiLiq, config.usdtLiq],
+  );
 
   await payroll.deployed();
 

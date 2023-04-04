@@ -8,32 +8,32 @@ const ethers = hre.ethers;
 const config = require("../config.json");
 
 async function main() {
+  console.log("Deploying test token...");
+  const TestToken = await ethers.getContractFactory("TestToken");
+  const TT = await TestToken.deploy();
 
-    console.log("Deploying test token...");
-    const TestToken = await ethers.getContractFactory("TestToken");
-    const TT = await TestToken.deploy();
+  await TT.deployed();
+  console.log("Test token deployed to:", TT.address);
 
-    await TT.deployed();
-    console.log("Test token deployed to:", TT.address);
+  console.log("Deploying test token...");
+  const TestToken2 = await ethers.getContractFactory("TestToken2");
+  const TT2 = await TestToken2.deploy();
 
-    console.log("Deploying test token...");
-    const TestToken2 = await ethers.getContractFactory("TestToken2");
-    const TT2 = await TestToken2.deploy();
+  await TT2.deployed();
+  console.log("Test token 2 deployed to:", TT2.address);
 
-    await TT2.deployed();
-    console.log("Test token 2 deployed to:", TT2.address);
+  console.log("Deploying test payroll contract...");
+  const OpolisPayroll = await ethers.getContractFactory("OpolisPay");
+  const payroll = await OpolisPayroll.deploy(
+    config.opolisAdmin,
+    config.opolisHelper,
+    config.ethLiq,
+    [TT.address, TT2.address],
+    [config.Token1Liq, config.Token2Liq]
+  );
 
-    console.log("Deploying test payroll contract...");
-    const OpolisPayroll = await ethers.getContractFactory("OpolisPay");
-    const payroll = await OpolisPayroll.deploy(
-      config.opolisAdmin, 
-      config.opolisHelper,
-      config.ethLiq,
-      [TT.address, TT2.address],
-      [config.Token1Liq, config.Token2Liq]);
-
-    await payroll.deployed();
-    console.log("Opolis Pay deployed to:", payroll.address);
+  await payroll.deployed();
+  console.log("Opolis Pay deployed to:", payroll.address);
 }
 
 main()

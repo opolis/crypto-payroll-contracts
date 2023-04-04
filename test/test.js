@@ -5,6 +5,7 @@ const provider = waffle.provider;
 const opolisEthLiq = "0x7136fbDdD4DFfa2369A9283B6E90A040318011Ca";
 const testTokenLiq = "0x7136fbDdD4DFfa2369A9283B6E90A040318011Ca";
 const testToken2Liq = "0x3792acDf2A8658FBaDe0ea70C47b89cB7777A5a5";
+const testToken3Liq = "0x1111aCdf2a8658FBADE0eA70c47b89cB7777A5a5";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 const ethAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const nonWhitelistedToken = (newAddress =
@@ -28,7 +29,6 @@ describe("payroll works", function () {
 
   const stakeApproval = ethers.utils.parseUnits("100000", 18);
 
-
   let setupTx;
 
   beforeEach(async () => {
@@ -49,9 +49,9 @@ describe("payroll works", function () {
     payroll = await OpolisPay.deploy(
       opolisAdmin.address,
       opolisHelper.address,
-      opolisEthLiq.address,
+      opolisEthLiq,
       [testToken.address, testToken2.address],
-      [testTokenLiq.address, testToken2Liq.address]
+      [testTokenLiq, testToken2Liq]
     );
     await payroll.deployed();
   });
@@ -60,9 +60,12 @@ describe("payroll works", function () {
     it("Setup should be done correctly", async function () {
       expect(payroll.deployTransaction)
         .to.emit(payroll, "SetupComplete")
-        .withArgs(opolisAdmin.address, opolisHelper.address, opolisEthLiq.address,
+        .withArgs(
+          opolisAdmin.address,
+          opolisHelper.address,
+          opolisEthLiq,
           [testToken.address, testToken2.address],
-          [testTokenLiq.address, testToken2Liq.address]
+          [testTokenLiq, testToken2Liq]
         );
     });
 
@@ -141,14 +144,15 @@ describe("payroll works", function () {
         payroll
           .connect(opolisMember1)
           .memberStake(testToken.address, payrollAmt2, payrollID1)
-      ).to.emit(payroll, "Staked")
-      .withArgs(
-        opolisMember1.address,
-        testToken.address,
-        payrollAmt2,
-        payrollID1,
-        2
-      );
+      )
+        .to.emit(payroll, "Staked")
+        .withArgs(
+          opolisMember1.address,
+          testToken.address,
+          payrollAmt2,
+          payrollID1,
+          2
+        );
     });
 
     it("Let's you stake with correct inputs", async function () {
@@ -180,9 +184,15 @@ describe("payroll works", function () {
         });
       expect(stake)
         .to.emit(payroll, "Staked")
-        .withArgs(opolisMember1.address, ethAddress, ethers.utils.parseEther("1.0").toString(), payrollID1, 1);
+        .withArgs(
+          opolisMember1.address,
+          ethAddress,
+          ethers.utils.parseEther("1.0").toString(),
+          payrollID1,
+          1
+        );
 
-      const ethBalance = await provider.getBalance(opolisDest);
+      const ethBalance = await provider.getBalance(opolisEthLiq);
       expect(ethBalance.eq(ethers.utils.parseEther("1.0"))).to.be.true;
     });
 
@@ -267,7 +277,12 @@ describe("payroll works", function () {
         .connect(opolisMember2)
         .memberStake(testToken.address, payrollAmt2, payrollID2);
       await expect(
-        payroll.withdrawStakes([payrollID1], [1,3,4], [testToken.address], [payrollAmt2])
+        payroll.withdrawStakes(
+          [payrollID1],
+          [1, 3, 4],
+          [testToken.address],
+          [payrollAmt2]
+        )
       ).to.be.revertedWith("InvalidWithdraw()");
     });
 
@@ -304,10 +319,8 @@ describe("payroll works", function () {
         .withArgs(testToken.address, payrollID2, payrollAmt2);
     });
 
-
-    
     it("withdraw lots of payrolls with multiple tokens at the same time", async function () {
-      await payroll.addTokens([testToken3.address], [testToken3Liq.address]);
+      await payroll.addTokens([testToken3.address], [testToken3Liq]);
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken2.mint(opolisMember2.address, payrollAmt2);
       await testToken3.mint(opolisMember2.address, payrollAmt2);
@@ -395,7 +408,7 @@ describe("payroll works", function () {
 
       const withdrawTx = await payroll.withdrawStakes(
         [payrollID1, payrollID2],
-        [1,1],
+        [1, 1],
         [testToken.address, testToken.address],
         [payrollAmt1, payrollAmt2]
       );
@@ -436,7 +449,7 @@ describe("payroll works", function () {
     });
 
     it("withdraw lots of stakes with multiple tokens at the same time", async function () {
-      await payroll.addTokens([testToken3.address], [testToken3Liq.address]);
+      await payroll.addTokens([testToken3.address], [testToken3Liq]);
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken2.mint(opolisMember2.address, payrollAmt2);
       await testToken3.mint(opolisMember2.address, payrollAmt2);
@@ -460,7 +473,7 @@ describe("payroll works", function () {
           .memberStake(testToken.address, "1", i);
 
         ids = [...ids, i];
-        nums = [...nums, 1]
+        nums = [...nums, 1];
         tokens = [...tokens, testToken.address];
         amounts = [...amounts, "1"];
       }
@@ -470,7 +483,7 @@ describe("payroll works", function () {
           .memberStake(testToken2.address, "1", i);
 
         ids = [...ids, i];
-        nums = [...nums, 1]
+        nums = [...nums, 1];
         tokens = [...tokens, testToken2.address];
         amounts = [...amounts, "1"];
       }
@@ -480,12 +493,17 @@ describe("payroll works", function () {
           .memberStake(testToken3.address, "1", i);
 
         ids = [...ids, i];
-        nums = [...nums, 1]
+        nums = [...nums, 1];
         tokens = [...tokens, testToken3.address];
         amounts = [...amounts, "1"];
       }
 
-      const withdrawTx = await payroll.withdrawStakes(ids, nums, tokens, amounts);
+      const withdrawTx = await payroll.withdrawStakes(
+        ids,
+        nums,
+        tokens,
+        amounts
+      );
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
         .withArgs(testToken.address, 1, 1, "1");
@@ -510,9 +528,9 @@ describe("payroll works", function () {
 
   describe("Admin update parameter functions", () => {
     it("valid destination, admin, helper addresses", async () => {
-      await expect(payroll.updateDestination(zeroAddress)).to.be.revertedWith(
-        "ZeroAddress()"
-      );
+      await expect(
+        payroll.updateDestination(testToken.address, zeroAddress)
+      ).to.be.revertedWith("ZeroAddress()");
       await expect(payroll.updateAdmin(zeroAddress)).to.be.revertedWith(
         "ZeroAddress()"
       );
@@ -523,7 +541,9 @@ describe("payroll works", function () {
 
     it("onlyAdmin", async () => {
       await expect(
-        payroll.connect(opolisMember1).updateDestination(newAddress)
+        payroll
+          .connect(opolisMember1)
+          .updateDestination(testToken.address, newAddress)
       ).to.be.revertedWith("NotPermitted()");
       await expect(
         payroll.connect(opolisMember1).updateAdmin(newAddress)
@@ -532,7 +552,7 @@ describe("payroll works", function () {
         payroll.connect(opolisMember1).updateHelper(newAddress)
       ).to.be.revertedWith("NotPermitted()");
       await expect(
-        payroll.connect(opolisMember1).addTokens([newAddress])
+        payroll.connect(opolisMember1).addTokens([newAddress], [newAddress])
       ).to.be.revertedWith("NotPermitted()");
       await expect(
         payroll.connect(opolisMember1).clearBalance()
@@ -540,10 +560,11 @@ describe("payroll works", function () {
     });
 
     it("update destination", async () => {
+      const oldDest = await payroll.liqDestinations(testToken.address);
       const tx = await payroll.updateDestination(testToken.address, newAddress);
       expect(tx)
         .to.emit(payroll, "NewDestination")
-        .withArgs(opolisDest, newAddress);
+        .withArgs(oldDest, testToken.address, newAddress);
     });
 
     it("update admin", async () => {
@@ -569,10 +590,10 @@ describe("payroll works", function () {
       const liqAddr = [
         "0x49E1484B74a82ed662B8C58De36E361Cd396349f",
         "0x525EEcB2865a1F8d2F28699D093eF76c32b53bD5",
-        "0x235974727FE00dCA394E581D28579f8Af59464a5"
-      ]
+        "0x235974727FE00dCA394E581D28579f8Af59464a5",
+      ];
       const tx = await payroll.addTokens(tokens, liqAddr);
-      expect(tx).to.emit(payroll, "NewTokens").withArgs(tokens);
+      expect(tx).to.emit(payroll, "NewTokens").withArgs(tokens, liqAddr);
     });
   });
 });
