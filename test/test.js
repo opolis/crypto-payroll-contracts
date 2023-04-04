@@ -295,6 +295,7 @@ describe("payroll works", function () {
       expect(withdrawTx)
         .to.emit(payroll, "OpsPayrollWithdraw")
         .withArgs(testToken.address, payrollID1, payrollAmt1);
+      expect(await testToken.balanceOf(testTokenLiq)).to.equal(payrollAmt1);
     });
 
     it("Can withdraw more than one payrolls", async function () {
@@ -317,6 +318,9 @@ describe("payroll works", function () {
       expect(withdrawTx)
         .to.emit(payroll, "OpsPayrollWithdraw")
         .withArgs(testToken.address, payrollID2, payrollAmt2);
+      expect(await testToken.balanceOf(testTokenLiq)).to.equal(
+        payrollAmt1.add(payrollAmt2)
+      );
     });
 
     it("withdraw lots of payrolls with multiple tokens at the same time", async function () {
@@ -418,6 +422,9 @@ describe("payroll works", function () {
       expect(withdrawTx)
         .to.emit(payroll, "OpsStakeWithdraw")
         .withArgs(testToken.address, payrollID2, 1, payrollAmt2);
+      expect(await testToken.balanceOf(testTokenLiq)).to.equal(
+        payrollAmt1.add(payrollAmt2)
+      );
     });
 
     it("Cannot withdraw a stake thats already withdrawn", async function () {
@@ -518,11 +525,14 @@ describe("payroll works", function () {
         .connect(opolisMember2)
         .payPayroll(testToken.address, payrollAmt2, payrollID2);
 
-      expect((await testToken.balanceOf(payroll.address)).toString()).to.equal(
-        payrollAmt1.add(payrollAmt2).toString()
+      expect(await testToken.balanceOf(payroll.address)).to.equal(
+        payrollAmt1.add(payrollAmt2)
       );
       await payroll.clearBalance();
       expect(Number(await testToken.balanceOf(payroll.address))).to.equal(0);
+      expect(await testToken.balanceOf(testTokenLiq)).to.equal(
+        payrollAmt1.add(payrollAmt2)
+      );
     });
   });
 

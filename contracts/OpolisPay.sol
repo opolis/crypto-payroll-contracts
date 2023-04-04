@@ -200,12 +200,10 @@ contract OpolisPay is ReentrancyGuard {
         // @dev increments the stake id for each member
         uint stakeCount = ++stakes[memberId];
 
-        // @dev function for auto transfering out stakes
-
+        // @dev function for auto transfering out stake
         if (msg.value > 0 && token == ETH) {
-            (bool success, ) = ethLiquidation.call{value: msg.value}("");
-            require(success, "Transfer failed.");
-            emit Staked(msg.sender, ETH, msg.value, memberId, stakes[memberId]);
+            payable(ethLiquidation).transfer(msg.value);
+            emit Staked(msg.sender, ETH, msg.value, memberId, stakeCount);
         } else {
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
             emit Staked(msg.sender, token, amount, memberId, stakeCount);
