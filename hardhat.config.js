@@ -51,6 +51,10 @@ module.exports = {
       url: `https://mainnet.aurora.dev`,
       accounts: [config.privateKey],
     },
+    auroraTestnet: {
+      url: `https://testnet.aurora.dev`,
+      accounts: [config.privateKey],
+    },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${config.infura}`,
       accounts: [config.privateKey],

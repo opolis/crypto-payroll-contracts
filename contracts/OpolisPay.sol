@@ -69,35 +69,13 @@ contract OpolisPay is ReentrancyGuard {
         address[] liqDestinations
     );
     event Staked(
-        address indexed staker,
-        address indexed token,
-        uint256 amount,
-        uint256 indexed memberId,
-        uint256 stakeNumber
+        address indexed staker, address indexed token, uint256 amount, uint256 indexed memberId, uint256 stakeNumber
     );
-    event Paid(
-        address indexed payor,
-        address indexed token,
-        uint256 indexed payrollId,
-        uint256 amount
-    );
-    event OpsPayrollWithdraw(
-        address indexed token,
-        uint256 indexed payrollId,
-        uint256 amount
-    );
-    event OpsStakeWithdraw(
-        address indexed token,
-        uint256 indexed stakeId,
-        uint256 stakeNumber,
-        uint256 amount
-    );
+    event Paid(address indexed payor, address indexed token, uint256 indexed payrollId, uint256 amount);
+    event OpsPayrollWithdraw(address indexed token, uint256 indexed payrollId, uint256 amount);
+    event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 stakeNumber, uint256 amount);
     event Sweep(address indexed token, uint256 amount);
-    event NewDestination(
-        address indexed oldDestination,
-        address indexed token,
-        address indexed destination
-    );
+    event NewDestination(address indexed oldDestination, address indexed token, address indexed destination);
     event NewAdmin(address indexed oldAdmin, address indexed opolisAdmin);
     event NewHelper(address indexed oldHelper, address indexed newHelper);
     event NewTokens(address[] newTokens, address[] newDestinations);
@@ -115,8 +93,9 @@ contract OpolisPay is ReentrancyGuard {
     }
 
     modifier onlyOpolis() {
-        if (!(msg.sender == opolisAdmin || msg.sender == opolisHelper))
+        if (!(msg.sender == opolisAdmin || msg.sender == opolisHelper)) {
             revert NotPermitted();
+        }
         _;
     }
 
@@ -134,10 +113,7 @@ contract OpolisPay is ReentrancyGuard {
         address[] memory _tokenList,
         address[] memory _destinationList
     ) {
-        require(
-            _tokenList.length == _destinationList.length,
-            "missing destination"
-        );
+        require(_tokenList.length == _destinationList.length, "missing destination");
         opolisAdmin = _opolisAdmin;
         opolisHelper = _opolisHelper;
         ethLiquidation = _ethLiq;
@@ -147,29 +123,21 @@ contract OpolisPay is ReentrancyGuard {
             _addDestination(_destinationList[i], _tokenList[i]);
         }
 
-        emit SetupComplete(
-            opolisAdmin,
-            opolisHelper,
-            _ethLiq,
-            _tokenList,
-            _destinationList
-        );
+        emit SetupComplete(opolisAdmin, opolisHelper, _ethLiq, _tokenList, _destinationList);
     }
 
-    /********************************************************************************
-                             CORE PAYROLL FUNCTIONS 
-     *******************************************************************************/
+    /**
+     *
+     *                          CORE PAYROLL FUNCTIONS 
+     *
+     */
 
     /// @notice core function for members to pay their payroll
     /// @param token the token being used to pay for their payroll
     /// @param amount the amount due for their payroll -- up to user / front-end to match
     /// @param payrollId the way we'll associate payments with members' invoices
 
-    function payPayroll(
-        address token,
-        uint256 amount,
-        uint256 payrollId
-    ) external nonReentrant {
+    function payPayroll(address token, uint256 amount, uint256 payrollId) external nonReentrant {
         if (!whitelisted[token]) revert NotWhitelisted();
         if (payrollId == 0) revert InvalidPayroll();
         if (amount == 0) revert InvalidAmount();
@@ -186,19 +154,14 @@ contract OpolisPay is ReentrancyGuard {
     /// @param amount the amount due for staking -- up to user / front-end to match
     /// @param memberId the way we'll associate the stake with a new member
 
-    function memberStake(
-        address token,
-        uint256 amount,
-        uint256 memberId
-    ) public payable nonReentrant {
-        if (
-            !((whitelisted[token] && amount != 0) ||
-                (token == ETH && msg.value != 0))
-        ) revert InvalidStake();
+    function memberStake(address token, uint256 amount, uint256 memberId) public payable nonReentrant {
+        if (!((whitelisted[token] && amount != 0) || (token == ETH && msg.value != 0))) {
+            revert InvalidStake();
+        }
         if (memberId == 0) revert NotMember();
 
         // @dev increments the stake id for each member
-        uint stakeCount = ++stakes[memberId];
+        uint256 stakeCount = ++stakes[memberId];
 
         // @dev function for auto transfering out stake
         if (msg.value > 0 && token == ETH) {
@@ -321,19 +284,18 @@ contract OpolisPay is ReentrancyGuard {
         revert DirectTransfer();
     }
 
-    /********************************************************************************
-                             ADMIN FUNCTIONS 
-     *******************************************************************************/
+    /**
+     *
+     *                          ADMIN FUNCTIONS 
+     *
+     */
 
     /// @notice this function is used to adjust where member funds are sent by contract
     /// @param token since each token has a new destination
     /// @param newDestination is the new address where funds are sent (assumes it's payable exchange address)
     /// @dev must be called by Opolis Admin multi-sig
 
-    function updateDestination(
-        address token,
-        address newDestination
-    ) external onlyAdmin {
+    function updateDestination(address token, address newDestination) external onlyAdmin {
         if (newDestination == ZERO) revert ZeroAddress();
 
         address oldDestination = liqDestinations[token];
@@ -346,9 +308,7 @@ contract OpolisPay is ReentrancyGuard {
     /// @param newAdmin is the new admin address
     /// @dev this should always be a mulit-sig
 
-    function updateAdmin(
-        address newAdmin
-    ) external onlyAdmin returns (address) {
+    function updateAdmin(address newAdmin) external onlyAdmin returns (address) {
         if (newAdmin == ZERO) revert ZeroAddress();
 
         emit NewAdmin(opolisAdmin, newAdmin);
@@ -361,9 +321,7 @@ contract OpolisPay is ReentrancyGuard {
     /// @param newHelper is the new bot address
     /// @dev this can be a hot wallet, since it has limited powers
 
-    function updateHelper(
-        address newHelper
-    ) external onlyAdmin returns (address) {
+    function updateHelper(address newHelper) external onlyAdmin returns (address) {
         if (newHelper == ZERO) revert ZeroAddress();
 
         emit NewHelper(opolisHelper, newHelper);
@@ -377,10 +335,7 @@ contract OpolisPay is ReentrancyGuard {
     /// @param newDestinations since each new token may have a different destination
     /// @dev restricted to admin b/c this is a business / compliance decision
 
-    function addTokens(
-        address[] memory newTokens,
-        address[] memory newDestinations
-    ) external onlyAdmin {
+    function addTokens(address[] memory newTokens, address[] memory newDestinations) external onlyAdmin {
         if (newTokens.length == 0) revert ZeroTokens();
 
         for (uint256 i = 0; i < newTokens.length; i++) {
@@ -391,9 +346,11 @@ contract OpolisPay is ReentrancyGuard {
         emit NewTokens(newTokens, newDestinations);
     }
 
-    /********************************************************************************
-                             INTERNAL FUNCTIONS 
-     *******************************************************************************/
+    /**
+     *
+     *                          INTERNAL FUNCTIONS 
+     *
+     */
 
     function _addToken(address token) internal {
         if (whitelisted[token]) revert AlreadyWhitelisted();
