@@ -48,6 +48,9 @@ error AlreadyWhitelisted();
 /// @dev sending eth directly to contract address
 error DirectTransfer();
 
+/// @dev token and destination length mismatch
+error LengthMismatch();
+
 /// @title OpolisPay
 /// @notice Minimalist Contract for Crypto Payroll Payments
 contract OpolisPay is ReentrancyGuard {
@@ -100,11 +103,11 @@ contract OpolisPay is ReentrancyGuard {
     }
 
     /// @notice launches contract with a destination as the Opolis wallet, the admins, and a token whitelist
-    /// @param _destinationList the addresses where payroll and stakes will be sent when withdrawn based on token
     /// @param _opolisAdmin the multi-sig which is the ultimate admin
-    /// @param _ethLiq the address where we send eth or native token liquidations
     /// @param _opolisHelper meant to allow for a bot to handle less sensitive items
+    /// @param _ethLiq the address where we send eth or native token liquidations
     /// @param _tokenList initial whitelist of tokens for staking and payroll
+    /// @param _destinationList the addresses where payroll and stakes will be sent when withdrawn based on token
 
     constructor(
         address _opolisAdmin,
@@ -113,7 +116,7 @@ contract OpolisPay is ReentrancyGuard {
         address[] memory _tokenList,
         address[] memory _destinationList
     ) {
-        require(_tokenList.length == _destinationList.length, "missing destination");
+        if (_tokenList.length != _destinationList.length) revert LengthMismatch();
         opolisAdmin = _opolisAdmin;
         opolisHelper = _opolisHelper;
         ethLiquidation = _ethLiq;
@@ -128,7 +131,7 @@ contract OpolisPay is ReentrancyGuard {
 
     /**
      *
-     *                          CORE PAYROLL FUNCTIONS 
+     *                          CORE PAYROLL FUNCTIONS
      *
      */
 
@@ -286,7 +289,7 @@ contract OpolisPay is ReentrancyGuard {
 
     /**
      *
-     *                          ADMIN FUNCTIONS 
+     *                          ADMIN FUNCTIONS
      *
      */
 
@@ -337,6 +340,7 @@ contract OpolisPay is ReentrancyGuard {
 
     function addTokens(address[] memory newTokens, address[] memory newDestinations) external onlyAdmin {
         if (newTokens.length == 0) revert ZeroTokens();
+        if (newTokens.length != newDestinations.length) revert LengthMismatch();
 
         for (uint256 i = 0; i < newTokens.length; i++) {
             _addToken(newTokens[i]);
@@ -348,7 +352,7 @@ contract OpolisPay is ReentrancyGuard {
 
     /**
      *
-     *                          INTERNAL FUNCTIONS 
+     *                          INTERNAL FUNCTIONS
      *
      */
 
