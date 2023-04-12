@@ -86,6 +86,7 @@ module.exports = {
     apiKey: {
       mainnet: config.etherscan,
       polygon: config.polyscan,
+      polygonMumbai: config.polyscan,
       harmony: "key",
       aurora: "key",
     },
