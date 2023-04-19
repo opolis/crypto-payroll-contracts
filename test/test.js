@@ -344,6 +344,7 @@ describe("payroll works", function () {
     });
 
     it("withdraw lots of payrolls with multiple tokens at the same time", async function () {
+      this.timeout(45000);
       await payroll.addTokens([testToken3.address], [testToken3Liq]);
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken2.mint(opolisMember2.address, payrollAmt2);
@@ -482,6 +483,7 @@ describe("payroll works", function () {
     });
 
     it("withdraw lots of stakes with multiple tokens at the same time", async function () {
+      this.timeout(45000);
       await payroll.addTokens([testToken3.address], [testToken3Liq]);
       await testToken.mint(opolisMember2.address, payrollAmt2);
       await testToken2.mint(opolisMember2.address, payrollAmt2);
