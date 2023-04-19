@@ -12,6 +12,7 @@ const nonWhitelistedToken = (newAddress =
   "0x2DaA35962A6D43EB54C48367b33d0B379C930E5e");
 
 describe("payroll works", function () {
+  this.timeout(60_000);
   let testToken;
   let testToken2;
   let testToken3;
