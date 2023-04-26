@@ -8,18 +8,17 @@ const ethers = hre.ethers;
 const config = require("../config.json");
 
 async function main() {
-  const OpolisPayroll = await ethers.getContractFactory("OpolisPay");
-  const payroll = await OpolisPayroll.deploy(
-    config.opolisAdmin,
-    config.opolisHelper,
-    config.ethLiq,
-    [config.usdcAddress, config.daiAddress, config.usdtAddress],
-    [config.usdcLiq, config.daiLiq, config.usdtLiq],
+  const TT = await ethers.getContractAt(
+    "TestToken",
+    "0x22a8fe0109b5457aE5C9E916838e807dd8B0A5B6" // TestToken address
+  );
+  const TT2 = await ethers.getContractAt(
+    "TestToken2",
+    "0x695937229C8Ad9a424506aE0cb1bd23fF6F7330e" // TestToken address
   );
 
-  await payroll.deployed();
-
-  console.log("Opolis Pay deployed to:", payroll.address);
+  await TT.mint(config.opolisAdmin, ethers.utils.parseEther("100000000"));
+  await TT2.mint(config.opolisAdmin, ethers.utils.parseEther("100000000"));
 }
 
 main()

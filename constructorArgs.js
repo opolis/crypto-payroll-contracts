@@ -1,6 +1,9 @@
+const config = require("./config.json");
+
 module.exports = [
-    "0xeac21d07A1E3442a1A86a9CBD423e879696925b5", 
-    "0xeac21d07A1E3442a1A86a9CBD423e879696925b5", 
-    "0x3d7098bF88675F09Fb0c1c746dbe41aF2686387A", 
-    ["0xEf977d2f931C1978Db5F6747666fa1eACB0d0339", "0x3C2B8Be99c50593081EAA2A724F0B8285F5aba8f","0x985458E523dB3d53125813eD68c274899e9DfAb4"]
-]
+  config.opolisAdmin,
+  config.opolisHelper,
+  config.ethLiq,
+  [config.usdcAddress, config.daiAddress, config.usdtAddress],
+  [config.usdcLiq, config.daiLiq, config.usdtLiq],
+];
