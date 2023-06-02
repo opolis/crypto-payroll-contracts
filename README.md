@@ -16,15 +16,23 @@ Steps for getting up and running:
 
 ## Deployments:
 
+Please check to make sure any crypto payroll or staking payments are being made to contracts on the Current Deployments List. 
+
+### Current Deployments: 
+
+* Mainnetv3 [0x22a8fe0109b5457aE5C9E916838e807dd8B0A5B6](https://etherscan.io/address/0x22a8fe0109b5457aE5C9E916838e807dd8B0A5B6)
+
+* Polygonv3: [0xAA3F190DF9E9A050ae88B2Df0aD8B70d8aF000D7](https://polygonscan.com/address/0xAA3F190DF9E9A050ae88B2Df0aD8B70d8aF000D7)
+
+* Aurorav3 [0x68De5a31D83f4280FCa75b289Ae87BCDCa2cec9C](https://explorer.aurora.dev/address/0x68De5a31D83f4280FCa75b289Ae87BCDCa2cec9C)
+
+### Past & Depreciated Deployments
+
 Mainnetv1: [0x87C91ac511688138E1452C942663f52cD5E2AbC5](https://etherscan.io/address/0x87C91ac511688138E1452C942663f52cD5E2AbC5) (DEPRECATED)
 
 Mainnetv2 [0xaE7db356c82401B111134041533AB490906C8ED5](https://etherscan.io/address/0xaE7db356c82401B111134041533AB490906C8ED5) (DEPRECATED)
 
-Mainnetv3 [0x22a8fe0109b5457aE5C9E916838e807dd8B0A5B6](https://etherscan.io/address/0x22a8fe0109b5457aE5C9E916838e807dd8B0A5B6)
-
 Polygonv2: [0x11d33195F1542298Ae5e3DE8395477A21B3196fe](https://polygonscan.com/address/0x11d33195F1542298Ae5e3DE8395477A21B3196fe) (DEPRECATED)
-
-Polygonv3: [0xAA3F190DF9E9A050ae88B2Df0aD8B70d8aF000D7](https://polygonscan.com/address/0xAA3F190DF9E9A050ae88B2Df0aD8B70d8aF000D7)
 
 Mumbaiv1: [0x347434c2BbBa4193bd56184bD768f4a4139Da39c](https://mumbai.polygonscan.com/address/0x347434c2BbBa4193bd56184bD768f4a4139Da39c) (DEPRECATED)
 
