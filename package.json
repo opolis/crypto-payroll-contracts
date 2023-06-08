@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
-    "@openzeppelin/contracts": "^4.4.2",
+    "@openzeppelin/contracts": "^4.9.1",
     "hardhat-abi-exporter": "^2.8.0"
   }
 }
