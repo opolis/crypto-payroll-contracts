@@ -615,6 +615,13 @@ describe("payroll works", function () {
       );
     });
 
+    it("update eth destination", async () => {
+      const tx = await payroll.updateEthDestination(newAddress);
+      expect(tx)
+        .to.emit(payroll, "NewDestinationEth")
+        .withArgs(opolisEthLiq, newAddress);
+    });
+
     it("update admin", async () => {
       const tx = await payroll.updateAdmin(newAddress);
       expect(tx)

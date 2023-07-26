@@ -79,6 +79,7 @@ contract OpolisPay is ReentrancyGuard {
     event OpsStakeWithdraw(address indexed token, uint256 indexed stakeId, uint256 stakeNumber, uint256 amount);
     event Sweep(address indexed token, uint256 amount);
     event NewDestination(address indexed oldDestination, address indexed token, address indexed destination);
+    event NewDestinationEth(address indexed oldDestination, address indexed destination);
     event NewAdmin(address indexed oldAdmin, address indexed opolisAdmin);
     event NewHelper(address indexed oldHelper, address indexed newHelper);
     event NewTokens(address[] newTokens, address[] newDestinations);
@@ -305,6 +306,15 @@ contract OpolisPay is ReentrancyGuard {
         liqDestinations[token] = newDestination;
 
         emit NewDestination(oldDestination, token, newDestination);
+    }
+
+    function updateEthDestination(address newDestination) external onlyAdmin {
+        if (newDestination == ZERO) revert ZeroAddress();
+
+        address oldDestination = ethLiquidation;
+        ethLiquidation = newDestination;
+
+        emit NewDestinationEth(oldDestination, newDestination);
     }
 
     /// @notice this function is used to replace the admin multi-sig
