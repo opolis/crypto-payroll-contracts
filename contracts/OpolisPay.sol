@@ -301,6 +301,7 @@ contract OpolisPay is ReentrancyGuard {
 
     function updateDestination(address token, address newDestination) external onlyAdmin {
         if (newDestination == ZERO) revert ZeroAddress();
+        if (!whitelisted[token]) revert NotWhitelisted();
 
         address oldDestination = liqDestinations[token];
         liqDestinations[token] = newDestination;

@@ -604,6 +604,12 @@ describe("payroll works", function () {
       ).to.be.revertedWith("NotPermitted()");
     });
 
+    it("can't update destination on address that is not a whitelisted token", async () => {
+      await expect(
+        payroll.updateDestination(ethAddress, newAddress)
+      ).to.be.revertedWith("NotWhitelisted()");
+    });
+
     it("update destination", async () => {
       const oldDest = await payroll.liqDestinations(testToken.address);
       const tx = await payroll.updateDestination(testToken.address, newAddress);
