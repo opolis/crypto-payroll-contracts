@@ -91,7 +91,7 @@ contract OpolisPay is ReentrancyGuard {
     mapping(address => address) public liqDestinations; //Tracks liquidation destinations for tokens
 
     modifier onlyAdmin() {
-        if (msg.sender != opolisAdmin) revert NotPermitted();
+        _checkAdmin();
         _;
     }
 
@@ -121,9 +121,13 @@ contract OpolisPay is ReentrancyGuard {
         opolisHelper = _opolisHelper;
         ethLiquidation = _ethLiq;
 
-        for (uint256 i = 0; i < _tokenList.length; i++) {
+        for (uint256 i; i < _tokenList.length;) {
             _addToken(_tokenList[i]);
             _addDestination(_destinationList[i], _tokenList[i]);
+
+            unchecked {
+                ++i;
+            }
         }
 
         emit SetupComplete(opolisAdmin, opolisHelper, _ethLiq, _tokenList, _destinationList);
@@ -166,7 +170,7 @@ contract OpolisPay is ReentrancyGuard {
         // @dev increments the stake id for each member
         uint256 stakeCount = ++stakes[memberId];
 
-        // @dev function for auto transfering out stake
+        // @dev function for auto transferring out stake
         if (msg.value > 0 && token == ETH) {
             payable(ethLiquidation).transfer(msg.value);
             emit Staked(msg.sender, ETH, msg.value, memberId, stakeCount);
@@ -189,7 +193,7 @@ contract OpolisPay is ReentrancyGuard {
         uint256[] memory withdrawAmounts = new uint256[](
             supportedTokens.length
         );
-        for (uint256 i = 0; i < _payrollIds.length; i++) {
+        for (uint256 i; i < _payrollIds.length;) {
             uint256 id = _payrollIds[i];
             if (!payrollIds[id]) revert InvalidPayroll();
 
@@ -198,10 +202,14 @@ contract OpolisPay is ReentrancyGuard {
 
             if (!payrollWithdrawn[id]) {
                 uint256 j;
-                for (; j < supportedTokens.length; j++) {
+                for (; j < supportedTokens.length;) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
+                    }
+
+                    unchecked {
+                        ++j;
                     }
                 }
                 if (j == supportedTokens.length) revert InvalidToken();
@@ -209,12 +217,20 @@ contract OpolisPay is ReentrancyGuard {
 
                 emit OpsPayrollWithdraw(token, id, amount);
             }
+
+            unchecked {
+                ++i;
+            }
         }
 
-        for (uint256 i = 0; i < withdrawAmounts.length; i++) {
+        for (uint256 i; i < withdrawAmounts.length;) {
             uint256 amount = withdrawAmounts[i];
             if (amount > 0) {
                 _withdraw(supportedTokens[i], amount);
+            }
+
+            unchecked {
+                ++i;
             }
         }
     }
@@ -236,7 +252,7 @@ contract OpolisPay is ReentrancyGuard {
         );
         if (_stakeIds.length != _stakeNum.length) revert InvalidWithdraw();
 
-        for (uint256 i = 0; i < _stakeIds.length; i++) {
+        for (uint256 i; i < _stakeIds.length;) {
             uint256 id = _stakeIds[i];
             address token = _stakeTokens[i];
             uint256 amount = _stakeAmounts[i];
@@ -244,10 +260,14 @@ contract OpolisPay is ReentrancyGuard {
 
             if (stakeWithdrawn[id] < num) {
                 uint256 j;
-                for (; j < supportedTokens.length; j++) {
+                for (; j < supportedTokens.length;) {
                     if (supportedTokens[j] == token) {
                         withdrawAmounts[j] += amount;
                         break;
+                    }
+
+                    unchecked {
+                        ++j;
                     }
                 }
                 if (j == supportedTokens.length) revert InvalidToken();
@@ -255,12 +275,20 @@ contract OpolisPay is ReentrancyGuard {
 
                 emit OpsStakeWithdraw(token, id, num, amount);
             }
+
+            unchecked {
+                ++i;
+            }
         }
 
-        for (uint256 i = 0; i < withdrawAmounts.length; i++) {
+        for (uint256 i; i < withdrawAmounts.length;) {
             uint256 amount = withdrawAmounts[i];
             if (amount > 0) {
                 _withdraw(supportedTokens[i], amount);
+            }
+
+            unchecked {
+                ++i;
             }
         }
     }
@@ -269,7 +297,7 @@ contract OpolisPay is ReentrancyGuard {
     /// @dev will mark any non-withdrawn payrolls as withdrawn
 
     function clearBalance() public onlyAdmin {
-        for (uint256 i = 0; i < supportedTokens.length; i++) {
+        for (uint256 i; i < supportedTokens.length;) {
             address token = supportedTokens[i];
             uint256 balance = IERC20(token).balanceOf(address(this));
 
@@ -277,6 +305,10 @@ contract OpolisPay is ReentrancyGuard {
                 _withdraw(token, balance);
             }
             emit Sweep(token, balance);
+
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -342,9 +374,13 @@ contract OpolisPay is ReentrancyGuard {
         if (newTokens.length == 0) revert ZeroTokens();
         if (newTokens.length != newDestinations.length) revert LengthMismatch();
 
-        for (uint256 i = 0; i < newTokens.length; i++) {
+        for (uint256 i; i < newTokens.length;) {
             _addToken(newTokens[i]);
             _addDestination(newDestinations[i], newTokens[i]);
+
+            unchecked {
+                ++i;
+            }
         }
 
         emit NewTokens(newTokens, newDestinations);
@@ -355,6 +391,11 @@ contract OpolisPay is ReentrancyGuard {
      *                          INTERNAL FUNCTIONS
      *
      */
+
+    /// @dev This function is used by modifier onlyAdmin
+    function _checkAdmin() internal view {
+        if (msg.sender != opolisAdmin) revert NotPermitted();
+    }
 
     function _addToken(address token) internal {
         if (whitelisted[token]) revert AlreadyWhitelisted();
